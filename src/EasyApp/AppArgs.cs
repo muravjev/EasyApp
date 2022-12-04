@@ -91,13 +91,227 @@ namespace EasyApp
         }
     }
 
-
     public interface IAppArgs
     {
         Result<T> Parse<T>(string[] args) where T : new();
     }
 
     internal record Field<TAttribute>(FieldInfo FieldInfo, TAttribute Attribute);
+
+    internal sealed class Parser<T> where T : new()
+    {
+        private readonly T Result;
+
+        private readonly Stack<string> Args;
+
+        private readonly Stack<string> Errors = new Stack<string>();
+
+        private bool SkipKeys = false;
+
+        private bool IsBreaked = false;
+
+        private int ValueIndex = 0;
+
+        private readonly Dictionary<string, Field<FlagAttribute>> Flags;
+
+        private readonly Dictionary<string, Field<OptionAttribute>> Options;
+
+        private readonly Field<ValueAttribute>[] Values;
+
+        internal Parser(string[] args, Dictionary<string, Field<FlagAttribute>> flags, Dictionary<string, Field<OptionAttribute>> options, Field<ValueAttribute>[] values)
+        {
+            Result = new T();
+            Args = new Stack<string>(args.Reverse());
+            Flags = flags;
+            Options = options;
+            Values = values;
+        }
+
+        private bool setFieldValue(FieldInfo field, string value)
+        {
+            if (field.FieldType == typeof(string))
+            {
+                field.SetValue(Result, value);
+                return true;
+            }
+            else if (field.FieldType == typeof(int))
+            {
+                if (int.TryParse(value, out int intValue))
+                {
+                    field.SetValue(Result, intValue);
+                    return true;
+                }
+                else
+                {
+                    Errors.Push($"Failed to parse '{value}' as int.");
+                }
+            }
+            else if (field.FieldType.IsEnum)
+            {
+                var enumValue = Enum.Parse(field.FieldType, value, true);
+                field.SetValue(Result, enumValue);
+                return true;
+            }
+            else
+            {
+                Errors.Push($"Unsupported type '{field.FieldType.Name}'.");
+            }
+
+            return false;
+        }
+
+        private bool parseSkipper(string arg)
+        {
+            if (arg == "--")
+            {
+                SkipKeys = true;
+            }
+
+            return SkipKeys;
+        }
+
+        private bool parseFlag(string arg)
+        {
+            var flag = Flags.GetValueOrDefault(arg);
+            if (flag == null)
+            {
+                return false;
+            }
+
+            flag.FieldInfo.SetValue(Result, true);
+
+            if (flag.Attribute.IsBreaker)
+            {
+                IsBreaked = true;
+            }
+
+            return true;
+        }
+
+        private bool parseOption(string arg)
+        {
+            var option = Options.GetValueOrDefault(arg);
+            if (option == null)
+            {
+                return false;
+            }
+
+            if (Args.Count == 0)
+            {
+                Errors.Push($"Missing option '{option.Attribute.Name}' value '{arg}'");
+            }
+            else
+            {
+                setFieldValue(option.FieldInfo, Args.Pop());
+            }
+
+            return true;
+        }
+
+        private bool parseOption(string arg, char separator)
+        {
+            var i = arg.IndexOf(separator);
+            if (i == -1)
+            {
+                return false;
+            }
+
+            var option = Options.GetValueOrDefault(arg.Substring(0, i));
+            if (option == null)
+            {
+                return false;
+            }
+
+            setFieldValue(option.FieldInfo, arg.Substring(i + 1));
+            return true;
+        }
+
+        private bool validateThatKeysAreParsed(string arg)
+        {
+            if (arg.StartsWith("-") || arg.StartsWith("/"))
+            {
+                Errors.Push($"Unknown key '{arg}'.");
+                return true;
+            }
+
+            return false;
+        }
+
+        private void parseValue(string arg)
+        {
+            if (ValueIndex >= Values.Length)
+            {
+                Errors.Push($"Unexpected parameter '{arg}'");
+                return;
+            }
+
+            var value = Values[ValueIndex++];
+
+            setFieldValue(value.FieldInfo, arg);
+        }
+
+        private void validateThatRequiredFieldsAreFilled<TAttribute>(IEnumerable<Field<TAttribute>> fields) where TAttribute : KeyAttribute
+        {
+            foreach (var field in fields)
+            {
+                if (field.Attribute.IsRequired && field.FieldInfo.GetValue(Result) == null)
+                {
+                    Errors.Push($"Value for '{field.Attribute.Name}' is missing.");
+                }
+            }
+        }
+
+        internal Result<T> Parse()
+        {
+            while (Args.Count > 0 && Errors.Count == 0 && IsBreaked == false)
+            {
+                var arg = Args.Pop();
+
+                if (!SkipKeys)
+                {
+                    if (parseSkipper(arg))
+                    {
+                        continue;
+                    }
+
+                    if (parseFlag(arg))
+                    {
+                        continue;
+                    }
+
+                    if (parseOption(arg))
+                    {
+                        continue;
+                    }
+
+                    if (parseOption(arg, ':'))
+                    {
+                        continue;
+                    }
+
+                    if (parseOption(arg, '='))
+                    {
+                        continue;
+                    }
+
+                    if (validateThatKeysAreParsed(arg))
+                    {
+                        continue;
+                    }
+                }
+
+                parseValue(arg);
+            }
+
+            if (Errors.Count == 0 && IsBreaked == false)
+            {
+                validateThatRequiredFieldsAreFilled(Options.Values);
+                validateThatRequiredFieldsAreFilled(Values);
+            }
+
+            return new Result<T>(Result, Errors, IsBreaked);
+        }
+    }
 
     public sealed class AppArgs : IAppArgs
     {
@@ -122,71 +336,21 @@ namespace EasyApp
                 if (!string.IsNullOrEmpty(attr.ShortKey))
                 {
                     byKey.Add($"-{attr.ShortKey}", field);
+                    byKey.Add($"/{attr.ShortKey}", field);
                 }
 
                 if (!string.IsNullOrEmpty(attr.LongKey))
                 {
                     byKey.Add($"--{attr.LongKey}", field);
+                    byKey.Add($"/{attr.LongKey}", field);
                 }
             }
 
             return byKey;
         }
 
-        private static bool setFieldValue<T>(T result, FieldInfo field, string value, Stack<string> errors)
+        public Result<T> Parse<T>(string[] args) where T : new()
         {
-            if (field.FieldType == typeof(string))
-            {
-                field.SetValue(result, value);
-                return true;
-            }
-            else if (field.FieldType == typeof(int))
-            {
-                if (int.TryParse(value, out int intValue))
-                {
-                    field.SetValue(result, intValue);
-                    return true;
-                }
-                else
-                {
-                    errors.Push($"Failed to parse '{value}' as int.");
-                }
-            }
-            else if (field.FieldType.IsEnum)
-            {
-                var enumValue = Enum.Parse(field.FieldType, value, true);
-                field.SetValue(result, enumValue);
-                return true;
-            }
-            else
-            {
-                errors.Push($"Unsupported type '{field.FieldType.Name}'.");
-            }
-
-            return false;
-        }
-
-        private static void validateRequiredFields<T, TAttribute>(T result, Field<TAttribute>[] fields, Stack<string> errors) where TAttribute : KeyAttribute
-        {
-            foreach (var field in fields)
-            {
-                if (field.Attribute.IsRequired && field.FieldInfo.GetValue(result) == null)
-                {
-                    errors.Push($"Value for '{field.Attribute.Name}' is missing.");
-                }
-            }
-        }
-
-        Result<T> IAppArgs.Parse<T>(string[] args)
-        {
-            var result = new T();
-            var errors = new Stack<string>();
-
-            if (args.Length == 0)
-            {
-                return new Result<T>(result, errors, true);
-            }
-
             var flagsFields = CollectFields<T, FlagAttribute>();
             var optionsFields = CollectFields<T, OptionAttribute>();
             var valuesFields = CollectFields<T, ValueAttribute>();
@@ -194,83 +358,9 @@ namespace EasyApp
             var flagsByKey = toFieldsByKeyMap(flagsFields);
             var optionsByKey = toFieldsByKeyMap(optionsFields);
 
-            var valueIndex = 0;
-            var skipKeys = false;
+            var parser = new Parser<T>(args, flagsByKey, optionsByKey, valuesFields);
 
-            for (var i = 0; i < args.Length; ++i)
-            {
-                var arg = args[i];
-
-                if (skipKeys == false)
-                {
-                    if (arg == "--")
-                    {
-                        skipKeys = true;
-                        continue;
-                    }
-
-                    var flag = flagsByKey.GetValueOrDefault(arg);
-                    if (flag != null)
-                    {
-                        flag.FieldInfo.SetValue(result, true);
-
-                        if (flag.Attribute.IsBreaker)
-                        {
-                            return new Result<T>(result, errors, true);
-                        }
-
-                        continue;
-                    }
-
-                    var option = optionsByKey.GetValueOrDefault(arg);
-                    if (option != null)
-                    {
-                        if (++i >= args.Length)
-                        {
-                            errors.Push($"Missing option '{option.Attribute.Name}' value '{arg}'");
-                            break;
-                        }
-
-                        var optionValue = args[i];
-
-                        if (!setFieldValue(result, option.FieldInfo, optionValue, errors))
-                        {
-                            break;
-                        }
-
-                        continue;
-                    }
-
-                    if (arg.StartsWith("-"))
-                    {
-                        errors.Push($"Unknown key '{arg}'.");
-                        break;
-                    }
-                }
-
-                if (valueIndex >= valuesFields.Length)
-                {
-                    errors.Push($"Unexpected parameter '{arg}'");
-                    break;
-                }
-
-                var value = valuesFields[valueIndex];
-
-                if (!setFieldValue(result, value.FieldInfo, arg, errors))
-                {
-                    break;
-                }
-
-                valueIndex++;
-            }
-
-            if (errors.Count == 0)
-            {
-                validateRequiredFields(result, optionsFields, errors);
-                validateRequiredFields(result, valuesFields, errors);
-            }
-
-            return new Result<T>(result, errors, false);
+            return parser.Parse();
         }
     }
 }
