@@ -37,10 +37,10 @@ namespace EasyApp
 
     public class FlagAttribute : FieldAttribute
     {
-        public bool IsBreaker = true;
+        public bool IsBreaker = false;
 
         public FlagAttribute(int order, char shortKey, string longKey, string description)
-            : base(order, null, shortKey.ToString(), longKey, description, false) { }
+            : base(order, null, shortKey == default ? null : shortKey.ToString(), longKey, description, false) { }
 
         public FlagAttribute(char shortKey, string longKey, string description)
             : this(1, shortKey, longKey, description) { }
@@ -75,12 +75,16 @@ namespace EasyApp
 
     public sealed class Result<T>
     {
+        // Parse options.
         public readonly T Options;
 
+        // Whether execution is breaked and help is required (no args or breakable flag like --version).
         public readonly bool IsBreaked = false;
 
+        // Whether there were an exception during parsing.
         public readonly Exception? Exception = null;
 
+        // Whether parsing is succeesfull.
         public bool IsParsed => Exception == null;
 
         public Result(T options, bool isBreaked)
@@ -124,7 +128,8 @@ namespace EasyApp
         internal Parser(string[] args, Dictionary<string, Field<FlagAttribute>> flags, Dictionary<string, Field<OptionAttribute>> options, Field<ParameterAttribute>[] parameters)
         {
             Result = new T();
-            Args = new Stack<string>(args.Reverse());
+            Args = new Stack<string>(args);
+            IsBreaked = args.Length == 0;
             Flags = flags;
             Options = options;
             Parameters = parameters;
@@ -245,24 +250,19 @@ namespace EasyApp
             setFieldValue(parameter.FieldInfo, arg);
         }
 
-        private void validateThatRequiredFieldsAreFilled<TAttribute>(IEnumerable<Field<TAttribute>> fields) where TAttribute : FieldAttribute
+        private void validateThatRequiredFieldsAreFilled<TAttribute>(IEnumerable<Field<TAttribute>> fields, string name) where TAttribute : FieldAttribute
         {
             foreach (var field in fields)
             {
                 if (field.Attribute.IsRequired && field.FieldInfo.GetValue(Result) == null)
                 {
-                    throw new AppException($"Value for '{field.Attribute.Name}' is missing.");
+                    throw new AppException($"Value for {name} '{field.Attribute.Name}' is required.");
                 }
             }
         }
 
         internal void parse()
         {
-            if (Args.Count == 0)
-            {
-                return;
-            }
-
             while (Args.Count > 0 && IsBreaked == false)
             {
                 var arg = Args.Pop();
@@ -310,8 +310,8 @@ namespace EasyApp
                 return;
             }
 
-            validateThatRequiredFieldsAreFilled(Options.Values);
-            validateThatRequiredFieldsAreFilled(Parameters);
+            validateThatRequiredFieldsAreFilled(Options.Values, "option");
+            validateThatRequiredFieldsAreFilled(Parameters, "parameter");
         }
 
         internal Result<T> Parse()
@@ -378,7 +378,9 @@ namespace EasyApp
             var flagsByKey = toFieldsByKeyMap(flagsFields);
             var optionsByKey = toFieldsByKeyMap(optionsFields);
 
-            var parser = new Parser<T>(args, flagsByKey, optionsByKey, parametersFields);
+            var nonEmptyArgs = args.Where(x => !string.IsNullOrEmpty(x)).Reverse().ToArray();
+
+            var parser = new Parser<T>(nonEmptyArgs, flagsByKey, optionsByKey, parametersFields);
 
             return parser.Parse();
         }

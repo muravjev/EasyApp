@@ -4,7 +4,7 @@ namespace EasyApp
     {
         public sealed class Options
         {
-            [Flag('h', "help", "Help screen.", IsBreaker = false)]
+            [Flag('h', "help", "Help screen.")]
             public bool Help = false;
 
             [Option('f', "format", "Datetime format.")]

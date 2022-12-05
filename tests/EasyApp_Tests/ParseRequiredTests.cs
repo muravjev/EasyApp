@@ -25,7 +25,7 @@ namespace EasyApp
             Assert.Multiple(() =>
             {
                 Assert.That(result.IsParsed, Is.EqualTo(true));
-                Assert.That(result.IsBreaked, Is.EqualTo(false));
+                Assert.That(result.IsBreaked, Is.EqualTo(true));
                 Assert.That(result.Options.F1, Is.EqualTo(false));
                 Assert.That(result.Options.F2, Is.EqualTo(false));
                 Assert.That(result.Options.O1, Is.EqualTo(null));

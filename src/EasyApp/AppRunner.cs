@@ -12,6 +12,19 @@
             : base(order, shortKey, longKey, description) { }
     }
 
+    public sealed class VerboseAttribute : FlagAttribute
+    {
+        public VerboseAttribute(int order = 0, char shortKey = default, string longKey = "verbose", string description = "Turn on verbose logging.")
+            : base(order, shortKey, longKey, description) { }
+    }
+
+    public sealed class QuietAttribute : FlagAttribute
+    {
+        public QuietAttribute(int order = 0, char shortKey = default, string longKey = "quiet", string description = "Turn off logging.")
+            : base(order, shortKey, longKey, description) { }
+    }
+
+
     public enum LogLevel
     {
         Quiet,
@@ -34,6 +47,12 @@
 
         [Version]
         public bool Version = false;
+
+        [Verbose]
+        public bool Verbose = false;
+
+        [Quiet]
+        public bool Queit = false;
 
         [LogLevel]
         public LogLevel LogLevel = LogLevel.Normal;
