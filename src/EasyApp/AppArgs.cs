@@ -1,23 +1,30 @@
-﻿using System.Reflection;
+﻿using System.ComponentModel;
+using System.Reflection;
 
 namespace EasyApp
 {
     [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
     public abstract class KeyAttribute : Attribute
     {
+        // Sorting order.
         public readonly int Order;
 
-        public readonly string Name;
+        // Value or Option <name>. Used in Usage and errors.
+        public readonly string? Name;
 
+        // Short key used in Flag and Option parsing and usage as -<key> /<key>.
         public readonly string? ShortKey;
 
+        // Long key used in Flag and Option parsing and usage as --<key> /<key>.
         public readonly string? LongKey;
 
+        // Description used in usage as description of Flag, Option or Value.
         public readonly string Description;
 
+        // Used in validation of an Option and Value that value is not deault.
         public readonly bool IsRequired;
 
-        protected KeyAttribute(int order, string name, string? shortKey, string? longKey, string description, bool isRequired)
+        protected KeyAttribute(int order, string? name, string? shortKey, string? longKey, string description, bool isRequired)
         {
             Order = order;
             Name = name;
@@ -26,15 +33,6 @@ namespace EasyApp
             Description = description;
             IsRequired = isRequired;
         }
-
-        protected KeyAttribute(int order, string name, string description, bool isRequired)
-            : this(order, name, null, null, description, isRequired) { }
-
-        protected KeyAttribute(int order, string shortKey, string longKey, string description, bool isRequired)
-            : this(order, longKey ?? shortKey, shortKey, longKey, description, isRequired) { }
-
-        protected KeyAttribute(int order, char shortKey, string longKey, string description, bool isRequired)
-            : this(order, shortKey.ToString(), longKey, description, isRequired) { }
     }
 
     public class FlagAttribute : KeyAttribute
@@ -42,30 +40,31 @@ namespace EasyApp
         public bool IsBreaker = true;
 
         public FlagAttribute(int order, char shortKey, string longKey, string description)
-            : base(order, shortKey, longKey, description, false) { }
+            : base(order, null, shortKey.ToString(), longKey, description, false) { }
 
         public FlagAttribute(char shortKey, string longKey, string description)
-            : base(1, shortKey, longKey, description, false) { }
+            : this(1, shortKey, longKey, description) { }
     }
 
     public class OptionAttribute : KeyAttribute
     {
-        public string? ValueName = null;
+        public OptionAttribute(int order, char shortKey, string longKey, string description, string? name = null, bool isRequired = true)
+            : base(order, name, shortKey.ToString(), longKey, description, isRequired) { }
 
-        public OptionAttribute(int order, char shortKey, string longKey, string description, string? valueName = null, bool isRequired = true)
-            : base(order, shortKey, longKey, description, isRequired)
-        {
-            ValueName = valueName;
-        }
+        public OptionAttribute(char shortKey, string longKey, string description, string? name = null, bool isRequired = true)
+            : this(1, shortKey, longKey, description, name, isRequired) { }
 
-        public OptionAttribute(char shortKey, string longKey, string description, string? valueName = null, bool isRequired = true)
-            : this(1, shortKey, longKey, description, valueName, isRequired) { }
+        public OptionAttribute(int order, string longKey, string description, string? name = null, bool isRequired = true)
+            : base(order, name, null, longKey, description, isRequired) { }
+
+        public OptionAttribute(string longKey, string description, string? name = null, bool isRequired = true)
+            : this(1, longKey, description, name, isRequired) { }
     }
 
     public class ValueAttribute : KeyAttribute
     {
         public ValueAttribute(int order, string name, string description, bool isRequired = true)
-            : base(order, name, description, isRequired) { }
+            : base(order, name, null, null, description, isRequired) { }
 
         public ValueAttribute(string name, string description, bool isRequired = true)
             : this(1, name, description, isRequired) { }
@@ -106,7 +105,7 @@ namespace EasyApp
 
         private readonly Stack<string> Errors = new Stack<string>();
 
-        private bool SkipKeys = false;
+        private bool ParseKeys = true;
 
         private bool IsBreaked = false;
 
@@ -164,10 +163,10 @@ namespace EasyApp
         {
             if (arg == "--")
             {
-                SkipKeys = true;
+                ParseKeys = false;
             }
 
-            return SkipKeys;
+            return !ParseKeys;
         }
 
         private bool parseFlag(string arg)
@@ -267,7 +266,7 @@ namespace EasyApp
             {
                 var arg = Args.Pop();
 
-                if (!SkipKeys)
+                if (ParseKeys)
                 {
                     if (parseSkipper(arg))
                     {

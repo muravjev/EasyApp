@@ -47,9 +47,9 @@ namespace EasyApp
             Console.WriteLine(LogLevel.Normal, Info.Description, ConsoleColor.Yellow);
         }
 
-        private static string getOptionName(Field<OptionAttribute> field)
+        private static string getName<TAttribute>(Field<TAttribute> field) where TAttribute : KeyAttribute
         {
-            return field.Attribute.ValueName ?? field.FieldInfo.Name.ToLower();
+            return field.Attribute.Name ?? field.FieldInfo.Name.ToLower();
         }
 
         private static int maxOrZero<TSource>(TSource[] source, Func<TSource, int> selector)
@@ -157,15 +157,15 @@ namespace EasyApp
             var parametersFields = AppArgs.CollectFields<T, ValueAttribute>();
 
             var flagsMaxWidth = maxOrZero(flagsFields, x => x.Attribute.LongKey?.Length ?? 0) + "  - , --  ".Length;
-            var optionsMaxWidth = maxOrZero(optionsFields, x => (x.Attribute.LongKey?.Length ?? 0) + getOptionName(x).Length + "  - , -- <>  ".Length);
-            var parametersMaxWidth = maxOrZero(parametersFields, x => x.Attribute.Name.Length + "  <>  ".Length);
+            var optionsMaxWidth = maxOrZero(optionsFields, x => (x.Attribute.LongKey?.Length ?? 0) + getName(x).Length + "  - , -- <>  ".Length);
+            var parametersMaxWidth = maxOrZero(parametersFields, x => getName(x).Length + "  <>  ".Length);
             var maxWidth = Math.Min(MIN_LEFT_COLUMN, Math.Max(Math.Max(flagsMaxWidth, optionsMaxWidth), parametersMaxWidth));
 
             var indent = new StringBuilder().Append(' ', maxWidth).ToString();
 
             writeSection(loglevel, maxWidth, indent, flagsFields, "Flags", f => formatKey(f.Attribute), formatValue);
-            writeSection(loglevel, maxWidth, indent, optionsFields, "Options", f => formatKey(f.Attribute, getOptionName(f).ToLower()), formatValue);
-            writeSection(loglevel, maxWidth, indent, parametersFields, "Parameters", f => $"  <{f.Attribute.Name}>", formatValue);
+            writeSection(loglevel, maxWidth, indent, optionsFields, "Options", f => formatKey(f.Attribute, getName(f)), formatValue);
+            writeSection(loglevel, maxWidth, indent, parametersFields, "Parameters", f => $"  <{getName(f)}>", formatValue);
         }
 
         private string? getValue<T>(FieldInfo fi, T options)
