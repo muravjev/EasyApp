@@ -46,9 +46,9 @@ namespace EasyApp
             Console.WriteLine(LogLevel.Normal, Info.Description, ConsoleColor.Yellow);
         }
 
-        private static string getName<TAttribute>(Field<TAttribute> field) where TAttribute : FieldAttribute
+        private static string getName(Member member)
         {
-            return field.Attribute.Name ?? field.Member.Name.ToLower();
+            return member.Attribute.Name ?? member.Name.ToLower();
         }
 
         private static int maxOrZero<TSource>(TSource[] source, Func<TSource, int> selector)
@@ -126,30 +126,30 @@ namespace EasyApp
 
         private const int MIN_LEFT_COLUMN = 30;
 
-        private void writeSection<T>(LogLevel loglevel, int maxWidth, string indent, Field<T>[] fields, string name, Func<Field<T>, string> formatKey, Func<FieldAttribute, IMember, string> formatValue) where T : FieldAttribute
+        private void writeSection(LogLevel loglevel, int maxWidth, string indent, Member[] members, string name, Func<Member, string> formatKey, Func<Member, string> formatValue)
         {
-            if (fields.Length > 0)
+            if (members.Length > 0)
             {
                 var multi = false;
 
                 Console.Section(loglevel, name);
 
-                foreach (var field in fields)
+                foreach (var member in members)
                 {
                     if (multi)
                     {
                         Console.WriteLine(loglevel);
                     }
 
-                    var key = formatKey(field);
+                    var key = formatKey(member);
                     multi = writeKey(loglevel, maxWidth, key);
-                    var value = formatValue(field.Attribute, field.Member);
+                    var value = formatValue(member);
                     multi |= writeValue(loglevel, indent, value);
                 }
             }
         }
 
-        private void writeOptions<T>(LogLevel loglevel, Func<FieldAttribute, IMember, string> formatValue)
+        private void writeOptions<T>(LogLevel loglevel, Func<Member, string> formatValue)
         {
             var flagsFields = AppArgs.CollectMembers<T, FlagAttribute>();
             var optionsFields = AppArgs.CollectMembers<T, OptionAttribute>();
@@ -167,7 +167,7 @@ namespace EasyApp
             writeSection(loglevel, maxWidth, indent, parametersFields, "Parameters", f => $"  <{getName(f)}>", formatValue);
         }
 
-        private string? getValue<T>(IMember member, T options)
+        private string? getValue<T>(Member member, T options)
         {
             var value = member.GetValue(options)?.ToString();
 
@@ -206,11 +206,11 @@ namespace EasyApp
 
             Console.WriteLine(LogLevel.Normal);
 
-            writeOptions<T>(LogLevel.Normal, (attr, member) =>
+            writeOptions<T>(LogLevel.Normal, (member) =>
             {
                 var sb = new StringBuilder();
 
-                sb.Append(attr.Description);
+                sb.Append(member.Attribute.Description);
 
                 if (member.Type.IsEnum)
                 {
@@ -235,7 +235,7 @@ namespace EasyApp
 
         void IAppOutput.Parameters<T>(T options)
         {
-            writeOptions<T>(LogLevel.Debug, (attr, member) =>
+            writeOptions<T>(LogLevel.Debug, (member) =>
             {
                 return getValue(member, options) ?? "<null>";
             });

@@ -4,10 +4,10 @@ namespace EasyApp
     {
         public class Options
         {
-            [Flag("f1", "Description", IsBreaker = true)]
+            [Flag("f1", "Description", true)]
             public bool F1 = false;
 
-            [Flag("f2", "Description", IsBreaker = false)]
+            [Flag("f2", "Description")]
             public bool F2 = false;
 
             [Option("o1", "Description")]

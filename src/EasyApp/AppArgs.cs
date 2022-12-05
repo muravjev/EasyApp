@@ -35,73 +35,6 @@ namespace EasyApp
         Result<T> Parse<T>(string[] args) where T : new();
     }
 
-    internal record Field<TAttribute>(IMember Member, TAttribute Attribute);
-
-    public interface IMember
-    {
-        int MetadataToken { get; }
-
-        string Name { get; }
-
-        Type Type { get; }
-
-        object? GetValue(object? instance);
-
-        void SetValue(object? instance, object? value);
-    }
-
-    public sealed class FieldMember : IMember
-    {
-        private readonly FieldInfo FieldInfo;
-
-        public FieldMember(FieldInfo fieldInfo)
-        {
-            FieldInfo = fieldInfo;
-        }
-
-        int IMember.MetadataToken => FieldInfo.MetadataToken;
-
-        string IMember.Name => FieldInfo.Name;
-
-        Type IMember.Type => FieldInfo.FieldType;
-
-        object? IMember.GetValue(object? instance)
-        {
-            return FieldInfo.GetValue(instance);
-        }
-
-        void IMember.SetValue(object? instance, object? value)
-        {
-            FieldInfo.SetValue(instance, value);
-        }
-    }
-
-    public sealed class PropertyMember : IMember
-    {
-        private readonly PropertyInfo PropertyInfo;
-
-        public PropertyMember(PropertyInfo fieldInfo)
-        {
-            PropertyInfo = fieldInfo;
-        }
-
-        int IMember.MetadataToken => PropertyInfo.MetadataToken;
-
-        string IMember.Name => PropertyInfo.Name;
-
-        Type IMember.Type => PropertyInfo.PropertyType;
-
-        object? IMember.GetValue(object? instance)
-        {
-            return PropertyInfo.GetValue(instance);
-        }
-
-        void IMember.SetValue(object? instance, object? value)
-        {
-            PropertyInfo.SetValue(instance, value);
-        }
-    }
-
     internal sealed class Parser<T> where T : new()
     {
         private readonly T Result;
@@ -114,13 +47,13 @@ namespace EasyApp
 
         private int ParameterIndex = 0;
 
-        private readonly Dictionary<string, Field<FlagAttribute>> Flags;
+        private readonly Dictionary<string, Member> Flags;
 
-        private readonly Dictionary<string, Field<OptionAttribute>> Options;
+        private readonly Dictionary<string, Member> Options;
 
-        private readonly Field<ParameterAttribute>[] Parameters;
+        private readonly Member[] Parameters;
 
-        internal Parser(string[] args, Dictionary<string, Field<FlagAttribute>> flags, Dictionary<string, Field<OptionAttribute>> options, Field<ParameterAttribute>[] parameters)
+        internal Parser(string[] args, Dictionary<string, Member> flags, Dictionary<string, Member> options, Member[] parameters)
         {
             Result = new T();
             Args = new Stack<string>(args);
@@ -130,7 +63,7 @@ namespace EasyApp
             Parameters = parameters;
         }
 
-        private void setFieldValue(IMember member, string value)
+        private void setFieldValue(Member member, string value)
         {
             try
             {
@@ -163,7 +96,7 @@ namespace EasyApp
                 return false;
             }
 
-            flag.Member.SetValue(Result, true);
+            flag.SetValue(Result, true);
 
             if (flag.Attribute.IsBreaker)
             {
@@ -203,7 +136,7 @@ namespace EasyApp
                 throw new AppException($"Missing option '{option.Attribute.Name}' value '{arg}'");
             }
 
-            setFieldValue(option.Member, value);
+            setFieldValue(option, value);
             return true;
         }
 
@@ -221,7 +154,7 @@ namespace EasyApp
                 return false;
             }
 
-            setFieldValue(option.Member, arg.Substring(i + 1));
+            setFieldValue(option, arg.Substring(i + 1));
             return true;
         }
 
@@ -242,16 +175,16 @@ namespace EasyApp
 
             var parameter = Parameters[ParameterIndex++];
 
-            setFieldValue(parameter.Member, arg);
+            setFieldValue(parameter, arg);
         }
 
-        private void validateThatRequiredFieldsAreFilled<TAttribute>(IEnumerable<Field<TAttribute>> fields, string name) where TAttribute : FieldAttribute
+        private void validateThatRequiredFieldsAreFilled(IEnumerable<Member> members, string name)
         {
-            foreach (var field in fields)
+            foreach (var member in members)
             {
-                if (field.Attribute.IsRequired && field.Member.GetValue(Result) == null)
+                if (member.Attribute.IsRequired && member.GetValue(Result) == null)
                 {
-                    throw new AppException($"Value for {name} '{field.Attribute.Name}' is required.");
+                    throw new AppException($"Value for {name} '{member.Attribute.Name}' is required.");
                 }
             }
         }
@@ -330,44 +263,44 @@ namespace EasyApp
 
     public sealed class AppArgs : IAppArgs
     {
-        internal static Field<TAttribute>[] CollectMembers<TOptions, TAttribute>() where TAttribute : FieldAttribute
+        internal static Member[] CollectMembers<TOptions, TAttribute>() where TAttribute : FieldAttribute
         {
             var fields = typeof(TOptions)
                 .GetFields()
                 .Where(field => Attribute.IsDefined(field, typeof(TAttribute)))
-                .Select(field => new Field<TAttribute>(new FieldMember(field), field.GetCustomAttribute<TAttribute>()!));
+                .Select(field => (Member)new FieldMember(field, field.GetCustomAttribute<TAttribute>()!));
 
             var props = typeof(TOptions)
                 .GetProperties()
                 .Where(prop => Attribute.IsDefined(prop, typeof(TAttribute)))
-                .Select(prop => new Field<TAttribute>(new PropertyMember(prop), prop.GetCustomAttribute<TAttribute>()!));
+                .Select(prop => (Member)new PropertyMember(prop, prop.GetCustomAttribute<TAttribute>()!));
 
             var members = fields.Concat(props)
                 .OrderBy(member => member.Attribute.Order)
-                .ThenBy(member => member.Member.MetadataToken)
+                .ThenBy(member => member.MetadataToken)
                 .ToArray();
 
             return members;
         }
 
-        private static Dictionary<string, Field<T>> toFieldsByKeyMap<T>(Field<T>[] fields) where T : FieldAttribute
+        private static Dictionary<string, Member> toFieldsByKeyMap(Member[] members)
         {
-            var byKey = new Dictionary<string, Field<T>>();
+            var byKey = new Dictionary<string, Member>();
 
-            foreach (var field in fields)
+            foreach (var member in members)
             {
-                var attr = field.Attribute;
+                var attr = member.Attribute;
 
                 if (!string.IsNullOrEmpty(attr.ShortKey))
                 {
-                    byKey.Add($"-{attr.ShortKey}", field);
-                    byKey.Add($"/{attr.ShortKey}", field);
+                    byKey.Add($"-{attr.ShortKey}", member);
+                    byKey.Add($"/{attr.ShortKey}", member);
                 }
 
                 if (!string.IsNullOrEmpty(attr.LongKey))
                 {
-                    byKey.Add($"--{attr.LongKey}", field);
-                    byKey.Add($"/{attr.LongKey}", field);
+                    byKey.Add($"--{attr.LongKey}", member);
+                    byKey.Add($"/{attr.LongKey}", member);
                 }
             }
 

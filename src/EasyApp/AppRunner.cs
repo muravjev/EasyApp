@@ -3,15 +3,20 @@
     public sealed class HelpAttribute : FlagAttribute
     {
         public HelpAttribute(int order = 0, char shortKey = 'h', string longKey = "help", string description = "Display help.")
-            : base(order, shortKey, longKey, description) { }
+            : base(order, shortKey, longKey, description, true) { }
     }
 
     public sealed class VersionAttribute : FlagAttribute
     {
         public VersionAttribute(int order = 0, char shortKey = 'v', string longKey = "version", string description = "Display version information.")
-            : base(order, shortKey, longKey, description) { }
+            : base(order, shortKey, longKey, description, true) { }
     }
 
+    public sealed class AllAttribute : FlagAttribute
+    {
+        public AllAttribute(int order = 0, char shortKey = default, string longKey = "all", string description = "Display all options.")
+            : base(order, shortKey, longKey, description, true) { }
+    }
     public sealed class VerboseAttribute : FlagAttribute
     {
         public VerboseAttribute(int order = 0, char shortKey = default, string longKey = "verbose", string description = "Turn on verbose logging.")
@@ -23,7 +28,6 @@
         public QuietAttribute(int order = 0, char shortKey = default, string longKey = "quiet", string description = "Turn off logging.")
             : base(order, shortKey, longKey, description) { }
     }
-
 
     public enum LogLevel
     {

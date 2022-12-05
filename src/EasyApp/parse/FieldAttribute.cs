@@ -7,7 +7,7 @@
         public readonly int Order;
 
         // Whether this Member (Flag) will break the further parsing.
-        public bool IsBreaker = false;
+        public readonly bool IsBreaker;
 
         // Parameter or Option <name>. Used in Usage and errors.
         public readonly string? Name;
@@ -24,7 +24,7 @@
         // Used in validation of an Option and Parameter that value is not default.
         public readonly bool IsRequired;
 
-        protected FieldAttribute(int order, string? name, string? shortKey, string? longKey, string description, bool isRequired)
+        protected FieldAttribute(int order, string? name, string? shortKey, string? longKey, string description, bool isRequired, bool isBreaker = false)
         {
             Order = order;
             Name = name;
@@ -32,6 +32,7 @@
             LongKey = longKey;
             Description = description;
             IsRequired = isRequired;
+            IsBreaker = isBreaker;
         }
     }
 }
