@@ -126,37 +126,19 @@ namespace EasyApp
             Values = values;
         }
 
-        private bool setFieldValue(FieldInfo field, string value)
+        private void setFieldValue(FieldInfo field, string value)
         {
-            if (field.FieldType == typeof(string))
+            try
             {
-                field.SetValue(Result, value);
-                return true;
-            }
-            else if (field.FieldType == typeof(int))
-            {
-                if (int.TryParse(value, out int intValue))
-                {
-                    field.SetValue(Result, intValue);
-                    return true;
-                }
-                else
-                {
-                    Errors.Push($"Failed to parse '{value}' as int.");
-                }
-            }
-            else if (field.FieldType.IsEnum)
-            {
-                var enumValue = Enum.Parse(field.FieldType, value, true);
-                field.SetValue(Result, enumValue);
-                return true;
-            }
-            else
-            {
-                Errors.Push($"Unsupported type '{field.FieldType.Name}'.");
-            }
+                var converter = TypeDescriptor.GetConverter(field.FieldType);
+                var converted = converter.ConvertFromInvariantString(value);
 
-            return false;
+                field.SetValue(Result, converted);
+            }
+            catch (Exception e)
+            {
+                Errors.Push($"Failed to parse '{value}' as {field.FieldType.Name}.");
+            }
         }
 
         private bool parseSkipper(string arg)
