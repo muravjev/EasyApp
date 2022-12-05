@@ -74,19 +74,22 @@ namespace EasyApp
     {
         public readonly T Options;
 
-        public readonly Stack<string> Errors;
+        public readonly bool IsBreaked = false;
 
-        public readonly bool IsBreaked;
+        public readonly Exception? Exception = null;
 
-        public bool IsParsed => Errors.Count == 0;
+        public bool IsParsed => Exception == null;
 
-        public bool HasErrors => Errors.Count > 0;
-
-        public Result(T options, Stack<string> errors, bool isBreaked)
+        public Result(T options, bool isBreaked)
         {
             Options = options;
-            Errors = errors;
             IsBreaked = isBreaked;
+        }
+
+        public Result(T options, Exception exception)
+        {
+            Options = options;
+            Exception = exception;
         }
     }
 
@@ -102,8 +105,6 @@ namespace EasyApp
         private readonly T Result;
 
         private readonly Stack<string> Args;
-
-        private readonly Stack<string> Errors = new Stack<string>();
 
         private bool ParseKeys = true;
 
@@ -137,7 +138,7 @@ namespace EasyApp
             }
             catch (Exception e)
             {
-                Errors.Push($"Failed to parse '{value}' as {field.FieldType.Name}.");
+                throw new AppException($"Failed to parse '{value}' as {field.FieldType.Name}.", e);
             }
         }
 
@@ -179,13 +180,10 @@ namespace EasyApp
 
             if (Args.Count == 0)
             {
-                Errors.Push($"Missing option '{option.Attribute.Name}' value '{arg}'");
-            }
-            else
-            {
-                setFieldValue(option.FieldInfo, Args.Pop());
+                throw new AppException($"Missing option '{option.Attribute.Name}' value '{arg}'");
             }
 
+            setFieldValue(option.FieldInfo, Args.Pop());
             return true;
         }
 
@@ -207,23 +205,19 @@ namespace EasyApp
             return true;
         }
 
-        private bool validateThatKeysAreParsed(string arg)
+        private void validateThatKeysAreParsed(string arg)
         {
             if (arg.StartsWith("-") || arg.StartsWith("/"))
             {
-                Errors.Push($"Unknown key '{arg}'.");
-                return true;
+                throw new AppException($"Unknown key '{arg}'.");
             }
-
-            return false;
         }
 
         private void parseValue(string arg)
         {
             if (ValueIndex >= Values.Length)
             {
-                Errors.Push($"Unexpected parameter '{arg}'");
-                return;
+                throw new AppException($"Unexpected parameter '{arg}'");
             }
 
             var value = Values[ValueIndex++];
@@ -237,14 +231,14 @@ namespace EasyApp
             {
                 if (field.Attribute.IsRequired && field.FieldInfo.GetValue(Result) == null)
                 {
-                    Errors.Push($"Value for '{field.Attribute.Name}' is missing.");
+                    throw new AppException($"Value for '{field.Attribute.Name}' is missing.");
                 }
             }
         }
 
-        internal Result<T> Parse()
+        internal void parse()
         {
-            while (Args.Count > 0 && Errors.Count == 0 && IsBreaked == false)
+            while (Args.Count > 0 && IsBreaked == false)
             {
                 var arg = Args.Pop();
 
@@ -275,22 +269,38 @@ namespace EasyApp
                         continue;
                     }
 
-                    if (validateThatKeysAreParsed(arg))
-                    {
-                        continue;
-                    }
+                    validateThatKeysAreParsed(arg);
                 }
 
                 parseValue(arg);
             }
 
-            if (Errors.Count == 0 && IsBreaked == false)
+            if (IsBreaked)
             {
-                validateThatRequiredFieldsAreFilled(Options.Values);
-                validateThatRequiredFieldsAreFilled(Values);
+                return;
             }
 
-            return new Result<T>(Result, Errors, IsBreaked);
+            validateThatRequiredFieldsAreFilled(Options.Values);
+            validateThatRequiredFieldsAreFilled(Values);
+        }
+
+
+        internal Result<T> Parse()
+        {
+            try
+            {
+                parse();
+            }
+            catch (AppException exception)
+            {
+                return new Result<T>(Result, exception);
+            }
+            catch (Exception exception)
+            {
+                return new Result<T>(Result, new AppException("Unknown parse exception.", exception));
+            }
+
+            return new Result<T>(Result, IsBreaked);
         }
     }
 

@@ -132,9 +132,9 @@
                     return 0;
                 }
 
-                if (result.HasErrors)
+                if (result.Exception != null)
                 {
-                    Console.Error(result.Errors.Pop());
+                    Console.Exception(result.Exception);
                     Output.Usage(result.Options);
                     return -2;
                 }
