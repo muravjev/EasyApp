@@ -44,6 +44,9 @@ namespace EasyApp
 
         public FlagAttribute(char shortKey, string longKey, string description)
             : this(1, shortKey, longKey, description) { }
+
+        public FlagAttribute(string longKey, string description)
+            : base(1, longKey, null, longKey, description, false) { }
     }
 
     public class OptionAttribute : KeyAttribute
@@ -170,6 +173,21 @@ namespace EasyApp
             return true;
         }
 
+        private string? popNextNotNullValue()
+        {
+            while (Args.Count > 0)
+            {
+                var value = Args.Pop();
+
+                if (!string.IsNullOrEmpty(value))
+                {
+                    return value;
+                }
+            }
+
+            return null;
+        }
+
         private bool parseOption(string arg)
         {
             var option = Options.GetValueOrDefault(arg);
@@ -178,12 +196,14 @@ namespace EasyApp
                 return false;
             }
 
-            if (Args.Count == 0)
+            var value = popNextNotNullValue();
+
+            if (value == null)
             {
                 throw new AppException($"Missing option '{option.Attribute.Name}' value '{arg}'");
             }
 
-            setFieldValue(option.FieldInfo, Args.Pop());
+            setFieldValue(option.FieldInfo, value);
             return true;
         }
 
@@ -238,9 +258,19 @@ namespace EasyApp
 
         internal void parse()
         {
+            if (Args.Count == 0)
+            {
+                return;
+            }
+
             while (Args.Count > 0 && IsBreaked == false)
             {
                 var arg = Args.Pop();
+
+                if (string.IsNullOrEmpty(arg))
+                {
+                    continue;
+                }
 
                 if (ParseKeys)
                 {
@@ -340,7 +370,7 @@ namespace EasyApp
             return byKey;
         }
 
-        public Result<T> Parse<T>(string[] args) where T : new()
+        public Result<T> Parse<T>(params string[] args) where T : new()
         {
             var flagsFields = CollectFields<T, FlagAttribute>();
             var optionsFields = CollectFields<T, OptionAttribute>();

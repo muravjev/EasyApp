@@ -1,6 +1,6 @@
 namespace EasyApp
 {
-    public sealed class AppArgsModeTests
+    public sealed class ParseModeTests
     {
         public sealed class Options
         {
