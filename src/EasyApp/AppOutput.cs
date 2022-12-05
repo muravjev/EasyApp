@@ -1,5 +1,4 @@
-﻿using System.Reflection;
-using System.Text;
+﻿using System.Text;
 
 namespace EasyApp
 {
@@ -49,7 +48,7 @@ namespace EasyApp
 
         private static string getName<TAttribute>(Field<TAttribute> field) where TAttribute : FieldAttribute
         {
-            return field.Attribute.Name ?? field.FieldInfo.Name.ToLower();
+            return field.Attribute.Name ?? field.Member.Name.ToLower();
         }
 
         private static int maxOrZero<TSource>(TSource[] source, Func<TSource, int> selector)
@@ -127,7 +126,7 @@ namespace EasyApp
 
         private const int MIN_LEFT_COLUMN = 30;
 
-        private void writeSection<T>(LogLevel loglevel, int maxWidth, string indent, Field<T>[] fields, string name, Func<Field<T>, string> formatKey, Func<FieldAttribute, FieldInfo, string> formatValue) where T : FieldAttribute
+        private void writeSection<T>(LogLevel loglevel, int maxWidth, string indent, Field<T>[] fields, string name, Func<Field<T>, string> formatKey, Func<FieldAttribute, IMember, string> formatValue) where T : FieldAttribute
         {
             if (fields.Length > 0)
             {
@@ -144,17 +143,17 @@ namespace EasyApp
 
                     var key = formatKey(field);
                     multi = writeKey(loglevel, maxWidth, key);
-                    var value = formatValue(field.Attribute, field.FieldInfo);
+                    var value = formatValue(field.Attribute, field.Member);
                     multi |= writeValue(loglevel, indent, value);
                 }
             }
         }
 
-        private void writeOptions<T>(LogLevel loglevel, Func<FieldAttribute, FieldInfo, string> formatValue)
+        private void writeOptions<T>(LogLevel loglevel, Func<FieldAttribute, IMember, string> formatValue)
         {
-            var flagsFields = AppArgs.CollectFields<T, FlagAttribute>();
-            var optionsFields = AppArgs.CollectFields<T, OptionAttribute>();
-            var parametersFields = AppArgs.CollectFields<T, ParameterAttribute>();
+            var flagsFields = AppArgs.CollectMembers<T, FlagAttribute>();
+            var optionsFields = AppArgs.CollectMembers<T, OptionAttribute>();
+            var parametersFields = AppArgs.CollectMembers<T, ParameterAttribute>();
 
             var flagsMaxWidth = maxOrZero(flagsFields, x => x.Attribute.LongKey?.Length ?? 0) + "  - , --  ".Length;
             var optionsMaxWidth = maxOrZero(optionsFields, x => (x.Attribute.LongKey?.Length ?? 0) + getName(x).Length + "  - , -- <>  ".Length);
@@ -168,11 +167,11 @@ namespace EasyApp
             writeSection(loglevel, maxWidth, indent, parametersFields, "Parameters", f => $"  <{getName(f)}>", formatValue);
         }
 
-        private string? getValue<T>(FieldInfo fi, T options)
+        private string? getValue<T>(IMember member, T options)
         {
-            var value = fi.GetValue(options)?.ToString();
+            var value = member.GetValue(options)?.ToString();
 
-            if (fi.FieldType == typeof(string))
+            if (member.Type == typeof(string))
             {
                 return value;
             }
@@ -186,9 +185,9 @@ namespace EasyApp
             Console.Write(LogLevel.Normal, "Usage: ");
             Console.Write(LogLevel.Normal, Info.Product);
 
-            var flagsFields = AppArgs.CollectFields<T, FlagAttribute>();
-            var optionsFields = AppArgs.CollectFields<T, OptionAttribute>();
-            var parametersFields = AppArgs.CollectFields<T, ParameterAttribute>();
+            var flagsFields = AppArgs.CollectMembers<T, FlagAttribute>();
+            var optionsFields = AppArgs.CollectMembers<T, OptionAttribute>();
+            var parametersFields = AppArgs.CollectMembers<T, ParameterAttribute>();
 
             if (flagsFields.Length > 0)
             {
@@ -207,21 +206,21 @@ namespace EasyApp
 
             Console.WriteLine(LogLevel.Normal);
 
-            writeOptions<T>(LogLevel.Normal, (attr, fi) =>
+            writeOptions<T>(LogLevel.Normal, (attr, member) =>
             {
                 var sb = new StringBuilder();
 
                 sb.Append(attr.Description);
 
-                if (fi.FieldType.IsEnum)
+                if (member.Type.IsEnum)
                 {
                     sb.AppendLine();
-                    sb.Append($"Values: {string.Join("|", Enum.GetNames(fi.FieldType).Select(x => x.ToLower()))}.");
+                    sb.Append($"Values: {string.Join("|", Enum.GetNames(member.Type).Select(x => x.ToLower()))}.");
                 }
 
-                if (fi.FieldType != typeof(bool))
+                if (member.Type != typeof(bool))
                 {
-                    var value = getValue(fi, options);
+                    var value = getValue(member, options);
                     if (value != null)
                     {
                         sb.AppendLine();
@@ -236,9 +235,9 @@ namespace EasyApp
 
         void IAppOutput.Parameters<T>(T options)
         {
-            writeOptions<T>(LogLevel.Debug, (attr, fi) =>
+            writeOptions<T>(LogLevel.Debug, (attr, member) =>
             {
-                return getValue(fi, options) ?? "<null>";
+                return getValue(member, options) ?? "<null>";
             });
         }
     }

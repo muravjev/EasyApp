@@ -3,7 +3,7 @@ using System.Reflection;
 
 namespace EasyApp
 {
-    [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false)]
     public abstract class FieldAttribute : Attribute
     {
         // Parameters order parsing! Order of Flags, Options, Parameters in Usage.
@@ -105,7 +105,72 @@ namespace EasyApp
         Result<T> Parse<T>(string[] args) where T : new();
     }
 
-    internal record Field<TAttribute>(FieldInfo FieldInfo, TAttribute Attribute);
+    internal record Field<TAttribute>(IMember Member, TAttribute Attribute);
+
+    public interface IMember
+    {
+        int MetadataToken { get; }
+
+        string Name { get; }
+
+        Type Type { get; }
+
+        object? GetValue(object? instance);
+
+        void SetValue(object? instance, object? value);
+    }
+
+    public sealed class FieldMember : IMember
+    {
+        private readonly FieldInfo FieldInfo;
+
+        public FieldMember(FieldInfo fieldInfo)
+        {
+            FieldInfo = fieldInfo;
+        }
+
+        int IMember.MetadataToken => FieldInfo.MetadataToken;
+
+        string IMember.Name => FieldInfo.Name;
+
+        Type IMember.Type => FieldInfo.FieldType;
+
+        object? IMember.GetValue(object? instance)
+        {
+            return FieldInfo.GetValue(instance);
+        }
+
+        void IMember.SetValue(object? instance, object? value)
+        {
+            FieldInfo.SetValue(instance, value);
+        }
+    }
+
+    public sealed class PropertyMember : IMember
+    {
+        private readonly PropertyInfo PropertyInfo;
+
+        public PropertyMember(PropertyInfo fieldInfo)
+        {
+            PropertyInfo = fieldInfo;
+        }
+
+        int IMember.MetadataToken => PropertyInfo.MetadataToken;
+
+        string IMember.Name => PropertyInfo.Name;
+
+        Type IMember.Type => PropertyInfo.PropertyType;
+
+        object? IMember.GetValue(object? instance)
+        {
+            return PropertyInfo.GetValue(instance);
+        }
+
+        void IMember.SetValue(object? instance, object? value)
+        {
+            PropertyInfo.SetValue(instance, value);
+        }
+    }
 
     internal sealed class Parser<T> where T : new()
     {
@@ -135,18 +200,18 @@ namespace EasyApp
             Parameters = parameters;
         }
 
-        private void setFieldValue(FieldInfo field, string value)
+        private void setFieldValue(IMember member, string value)
         {
             try
             {
-                var converter = TypeDescriptor.GetConverter(field.FieldType);
+                var converter = TypeDescriptor.GetConverter(member.Type);
                 var converted = converter.ConvertFromInvariantString(value);
 
-                field.SetValue(Result, converted);
+                member.SetValue(Result, converted);
             }
             catch (Exception e)
             {
-                throw new AppException($"Failed to parse '{value}' as {field.FieldType.Name}.", e);
+                throw new AppException($"Failed to parse '{value}' as {member.Type.Name}.", e);
             }
         }
 
@@ -168,7 +233,7 @@ namespace EasyApp
                 return false;
             }
 
-            flag.FieldInfo.SetValue(Result, true);
+            flag.Member.SetValue(Result, true);
 
             if (flag.Attribute.IsBreaker)
             {
@@ -208,7 +273,7 @@ namespace EasyApp
                 throw new AppException($"Missing option '{option.Attribute.Name}' value '{arg}'");
             }
 
-            setFieldValue(option.FieldInfo, value);
+            setFieldValue(option.Member, value);
             return true;
         }
 
@@ -226,7 +291,7 @@ namespace EasyApp
                 return false;
             }
 
-            setFieldValue(option.FieldInfo, arg.Substring(i + 1));
+            setFieldValue(option.Member, arg.Substring(i + 1));
             return true;
         }
 
@@ -247,14 +312,14 @@ namespace EasyApp
 
             var parameter = Parameters[ParameterIndex++];
 
-            setFieldValue(parameter.FieldInfo, arg);
+            setFieldValue(parameter.Member, arg);
         }
 
         private void validateThatRequiredFieldsAreFilled<TAttribute>(IEnumerable<Field<TAttribute>> fields, string name) where TAttribute : FieldAttribute
         {
             foreach (var field in fields)
             {
-                if (field.Attribute.IsRequired && field.FieldInfo.GetValue(Result) == null)
+                if (field.Attribute.IsRequired && field.Member.GetValue(Result) == null)
                 {
                     throw new AppException($"Value for {name} '{field.Attribute.Name}' is required.");
                 }
@@ -335,14 +400,24 @@ namespace EasyApp
 
     public sealed class AppArgs : IAppArgs
     {
-        internal static Field<TAttribute>[] CollectFields<TOptions, TAttribute>() where TAttribute : FieldAttribute
+        internal static Field<TAttribute>[] CollectMembers<TOptions, TAttribute>() where TAttribute : FieldAttribute
         {
-            return typeof(TOptions)
+            var fields = typeof(TOptions)
                 .GetFields()
                 .Where(field => Attribute.IsDefined(field, typeof(TAttribute)))
-                .Select(x => new Field<TAttribute>(x, x.GetCustomAttribute<TAttribute>()!))
-                .OrderBy(x => x.Attribute.Order).ThenBy(x => x.FieldInfo.MetadataToken)
+                .Select(field => new Field<TAttribute>(new FieldMember(field), field.GetCustomAttribute<TAttribute>()!));
+
+            var props = typeof(TOptions)
+                .GetProperties()
+                .Where(prop => Attribute.IsDefined(prop, typeof(TAttribute)))
+                .Select(prop => new Field<TAttribute>(new PropertyMember(prop), prop.GetCustomAttribute<TAttribute>()!));
+
+            var members = fields.Concat(props)
+                .OrderBy(member => member.Attribute.Order)
+                .ThenBy(member => member.Member.MetadataToken)
                 .ToArray();
+
+            return members;
         }
 
         private static Dictionary<string, Field<T>> toFieldsByKeyMap<T>(Field<T>[] fields) where T : FieldAttribute
@@ -371,9 +446,9 @@ namespace EasyApp
 
         public Result<T> Parse<T>(params string[] args) where T : new()
         {
-            var flagsFields = CollectFields<T, FlagAttribute>();
-            var optionsFields = CollectFields<T, OptionAttribute>();
-            var parametersFields = CollectFields<T, ParameterAttribute>();
+            var flagsFields = CollectMembers<T, FlagAttribute>();
+            var optionsFields = CollectMembers<T, OptionAttribute>();
+            var parametersFields = CollectMembers<T, ParameterAttribute>();
 
             var flagsByKey = toFieldsByKeyMap(flagsFields);
             var optionsByKey = toFieldsByKeyMap(optionsFields);
