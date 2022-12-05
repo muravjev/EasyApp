@@ -13,7 +13,7 @@ namespace EasyApp
             [Option("o1", "Description")]
             public string? O1 = null;
 
-            [Value("p1", "Description")]
+            [Parameter("p1", "Description")]
             public string? P1 = null;
         }
 

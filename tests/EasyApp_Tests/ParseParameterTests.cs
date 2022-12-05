@@ -4,8 +4,8 @@ namespace EasyApp
     {
         public sealed class Options<T>
         {
-            [Value("value", "Option.")]
-            public T? Value = default;
+            [Parameter("p1", "Option.")]
+            public T? P1 = default;
         }
 
         private static Result<Options<T>> parse<T>(string arg)
@@ -28,7 +28,7 @@ namespace EasyApp
             Assert.Multiple(() =>
             {
                 Assert.That(result.IsParsed, Is.EqualTo(true));
-                Assert.That(result.Options.Value, Is.EqualTo(value));
+                Assert.That(result.Options.P1, Is.EqualTo(value));
             });
         }
 
@@ -42,7 +42,7 @@ namespace EasyApp
             Assert.Multiple(() =>
             {
                 Assert.That(result.IsParsed, Is.EqualTo(true));
-                Assert.That(result.Options.Value, Is.EqualTo(value));
+                Assert.That(result.Options.P1, Is.EqualTo(value));
             });
         }
         public enum Foo
@@ -61,7 +61,7 @@ namespace EasyApp
             Assert.Multiple(() =>
             {
                 Assert.That(result.IsParsed, Is.EqualTo(true));
-                Assert.That(result.Options.Value, Is.EqualTo(value));
+                Assert.That(result.Options.P1, Is.EqualTo(value));
             });
         }
 
@@ -74,7 +74,7 @@ namespace EasyApp
             Assert.Multiple(() =>
             {
                 Assert.That(result.IsParsed, Is.EqualTo(false));
-                Assert.That(result.Options.Value, Is.EqualTo(default(Foo)));
+                Assert.That(result.Options.P1, Is.EqualTo(default(Foo)));
                 Assert.That(result.Exception, Is.TypeOf<AppException>());
             });
         }
@@ -89,7 +89,7 @@ namespace EasyApp
             Assert.Multiple(() =>
             {
                 Assert.That(result.IsParsed, Is.EqualTo(true));
-                Assert.That(result.Options.Value, Is.EqualTo(value));
+                Assert.That(result.Options.P1, Is.EqualTo(value));
             });
         }
 
@@ -106,7 +106,7 @@ namespace EasyApp
             Assert.Multiple(() =>
             {
                 Assert.That(result.IsParsed, Is.EqualTo(true));
-                Assert.That(result.Options.Value, Is.EqualTo(DateTime.Parse(value)));
+                Assert.That(result.Options.P1, Is.EqualTo(DateTime.Parse(value)));
             });
         }
 
@@ -121,7 +121,7 @@ namespace EasyApp
             Assert.Multiple(() =>
             {
                 Assert.That(result.IsParsed, Is.EqualTo(true));
-                Assert.That(result.Options.Value, Is.EqualTo(Guid.Parse(value)));
+                Assert.That(result.Options.P1, Is.EqualTo(Guid.Parse(value)));
             });
         }
 
@@ -136,7 +136,7 @@ namespace EasyApp
             Assert.Multiple(() =>
             {
                 Assert.That(result.IsParsed, Is.EqualTo(true));
-                Assert.That(result.Options.Value, Is.EqualTo(value));
+                Assert.That(result.Options.P1, Is.EqualTo(value));
             });
         }
 
@@ -152,7 +152,7 @@ namespace EasyApp
             Assert.Multiple(() =>
             {
                 Assert.That(result.IsParsed, Is.EqualTo(true));
-                Assert.That(result.Options.Value, Is.EqualTo(value));
+                Assert.That(result.Options.P1, Is.EqualTo(value));
             });
         }
 
@@ -166,7 +166,7 @@ namespace EasyApp
             Assert.Multiple(() =>
             {
                 Assert.That(result.IsParsed, Is.EqualTo(false));
-                Assert.That(result.Options.Value, Is.EqualTo(default(byte)));
+                Assert.That(result.Options.P1, Is.EqualTo(default(byte)));
                 Assert.That(result.Exception, Is.TypeOf<AppException>());
             });
         }
@@ -183,7 +183,7 @@ namespace EasyApp
             Assert.Multiple(() =>
             {
                 Assert.That(result.IsParsed, Is.EqualTo(true));
-                Assert.That(result.Options.Value, Is.EqualTo(value));
+                Assert.That(result.Options.P1, Is.EqualTo(value));
             });
         }
 
@@ -197,7 +197,7 @@ namespace EasyApp
             Assert.Multiple(() =>
             {
                 Assert.That(result.IsParsed, Is.EqualTo(false));
-                Assert.That(result.Options.Value, Is.EqualTo(default(int)));
+                Assert.That(result.Options.P1, Is.EqualTo(default(int)));
                 Assert.That(result.Exception, Is.TypeOf<AppException>());
             });
         }

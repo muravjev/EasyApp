@@ -4,12 +4,12 @@ using System.Reflection;
 namespace EasyApp
 {
     [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
-    public abstract class KeyAttribute : Attribute
+    public abstract class FieldAttribute : Attribute
     {
-        // Sorting order.
+        // Parameters order parsing! Order of Flags, Options, Parameters in Usage.
         public readonly int Order;
 
-        // Value or Option <name>. Used in Usage and errors.
+        // Parameter or Option <name>. Used in Usage and errors.
         public readonly string? Name;
 
         // Short key used in Flag and Option parsing and usage as -<key> /<key>.
@@ -18,13 +18,13 @@ namespace EasyApp
         // Long key used in Flag and Option parsing and usage as --<key> /<key>.
         public readonly string? LongKey;
 
-        // Description used in usage as description of Flag, Option or Value.
+        // Description used in usage as description of Flag, Option or Parameter.
         public readonly string Description;
 
-        // Used in validation of an Option and Value that value is not deault.
+        // Used in validation of an Option and Parameter that value is not default.
         public readonly bool IsRequired;
 
-        protected KeyAttribute(int order, string? name, string? shortKey, string? longKey, string description, bool isRequired)
+        protected FieldAttribute(int order, string? name, string? shortKey, string? longKey, string description, bool isRequired)
         {
             Order = order;
             Name = name;
@@ -35,7 +35,7 @@ namespace EasyApp
         }
     }
 
-    public class FlagAttribute : KeyAttribute
+    public class FlagAttribute : FieldAttribute
     {
         public bool IsBreaker = true;
 
@@ -49,7 +49,7 @@ namespace EasyApp
             : base(1, longKey, null, longKey, description, false) { }
     }
 
-    public class OptionAttribute : KeyAttribute
+    public class OptionAttribute : FieldAttribute
     {
         public OptionAttribute(int order, char shortKey, string longKey, string description, string? name = null, bool isRequired = true)
             : base(order, name, shortKey.ToString(), longKey, description, isRequired) { }
@@ -64,12 +64,12 @@ namespace EasyApp
             : this(1, longKey, description, name, isRequired) { }
     }
 
-    public class ValueAttribute : KeyAttribute
+    public class ParameterAttribute : FieldAttribute
     {
-        public ValueAttribute(int order, string name, string description, bool isRequired = true)
+        public ParameterAttribute(int order, string name, string description, bool isRequired = true)
             : base(order, name, null, null, description, isRequired) { }
 
-        public ValueAttribute(string name, string description, bool isRequired = true)
+        public ParameterAttribute(string name, string description, bool isRequired = true)
             : this(1, name, description, isRequired) { }
     }
 
@@ -113,21 +113,21 @@ namespace EasyApp
 
         private bool IsBreaked = false;
 
-        private int ValueIndex = 0;
+        private int ParameterIndex = 0;
 
         private readonly Dictionary<string, Field<FlagAttribute>> Flags;
 
         private readonly Dictionary<string, Field<OptionAttribute>> Options;
 
-        private readonly Field<ValueAttribute>[] Values;
+        private readonly Field<ParameterAttribute>[] Parameters;
 
-        internal Parser(string[] args, Dictionary<string, Field<FlagAttribute>> flags, Dictionary<string, Field<OptionAttribute>> options, Field<ValueAttribute>[] values)
+        internal Parser(string[] args, Dictionary<string, Field<FlagAttribute>> flags, Dictionary<string, Field<OptionAttribute>> options, Field<ParameterAttribute>[] parameters)
         {
             Result = new T();
             Args = new Stack<string>(args.Reverse());
             Flags = flags;
             Options = options;
-            Values = values;
+            Parameters = parameters;
         }
 
         private void setFieldValue(FieldInfo field, string value)
@@ -233,19 +233,19 @@ namespace EasyApp
             }
         }
 
-        private void parseValue(string arg)
+        private void parseParameter(string arg)
         {
-            if (ValueIndex >= Values.Length)
+            if (ParameterIndex >= Parameters.Length)
             {
                 throw new AppException($"Unexpected parameter '{arg}'");
             }
 
-            var value = Values[ValueIndex++];
+            var parameter = Parameters[ParameterIndex++];
 
-            setFieldValue(value.FieldInfo, arg);
+            setFieldValue(parameter.FieldInfo, arg);
         }
 
-        private void validateThatRequiredFieldsAreFilled<TAttribute>(IEnumerable<Field<TAttribute>> fields) where TAttribute : KeyAttribute
+        private void validateThatRequiredFieldsAreFilled<TAttribute>(IEnumerable<Field<TAttribute>> fields) where TAttribute : FieldAttribute
         {
             foreach (var field in fields)
             {
@@ -302,7 +302,7 @@ namespace EasyApp
                     validateThatKeysAreParsed(arg);
                 }
 
-                parseValue(arg);
+                parseParameter(arg);
             }
 
             if (IsBreaked)
@@ -311,9 +311,8 @@ namespace EasyApp
             }
 
             validateThatRequiredFieldsAreFilled(Options.Values);
-            validateThatRequiredFieldsAreFilled(Values);
+            validateThatRequiredFieldsAreFilled(Parameters);
         }
-
 
         internal Result<T> Parse()
         {
@@ -336,7 +335,7 @@ namespace EasyApp
 
     public sealed class AppArgs : IAppArgs
     {
-        internal static Field<TAttribute>[] CollectFields<TOptions, TAttribute>() where TAttribute : KeyAttribute
+        internal static Field<TAttribute>[] CollectFields<TOptions, TAttribute>() where TAttribute : FieldAttribute
         {
             return typeof(TOptions)
                 .GetFields()
@@ -346,7 +345,7 @@ namespace EasyApp
                 .ToArray();
         }
 
-        private static Dictionary<string, Field<T>> toFieldsByKeyMap<T>(Field<T>[] fields) where T : KeyAttribute
+        private static Dictionary<string, Field<T>> toFieldsByKeyMap<T>(Field<T>[] fields) where T : FieldAttribute
         {
             var byKey = new Dictionary<string, Field<T>>();
 
@@ -374,12 +373,12 @@ namespace EasyApp
         {
             var flagsFields = CollectFields<T, FlagAttribute>();
             var optionsFields = CollectFields<T, OptionAttribute>();
-            var valuesFields = CollectFields<T, ValueAttribute>();
+            var parametersFields = CollectFields<T, ParameterAttribute>();
 
             var flagsByKey = toFieldsByKeyMap(flagsFields);
             var optionsByKey = toFieldsByKeyMap(optionsFields);
 
-            var parser = new Parser<T>(args, flagsByKey, optionsByKey, valuesFields);
+            var parser = new Parser<T>(args, flagsByKey, optionsByKey, parametersFields);
 
             return parser.Parse();
         }

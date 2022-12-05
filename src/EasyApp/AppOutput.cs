@@ -47,7 +47,7 @@ namespace EasyApp
             Console.WriteLine(LogLevel.Normal, Info.Description, ConsoleColor.Yellow);
         }
 
-        private static string getName<TAttribute>(Field<TAttribute> field) where TAttribute : KeyAttribute
+        private static string getName<TAttribute>(Field<TAttribute> field) where TAttribute : FieldAttribute
         {
             return field.Attribute.Name ?? field.FieldInfo.Name.ToLower();
         }
@@ -62,7 +62,7 @@ namespace EasyApp
             return 0;
         }
 
-        private string formatKey(KeyAttribute attribute, string? dataName = null)
+        private string formatKey(FieldAttribute attribute, string? dataName = null)
         {
             var sb = new StringBuilder("  ");
 
@@ -127,7 +127,7 @@ namespace EasyApp
 
         private const int MIN_LEFT_COLUMN = 30;
 
-        private void writeSection<T>(LogLevel loglevel, int maxWidth, string indent, Field<T>[] fields, string name, Func<Field<T>, string> formatKey, Func<KeyAttribute, FieldInfo, string> formatValue) where T : KeyAttribute
+        private void writeSection<T>(LogLevel loglevel, int maxWidth, string indent, Field<T>[] fields, string name, Func<Field<T>, string> formatKey, Func<FieldAttribute, FieldInfo, string> formatValue) where T : FieldAttribute
         {
             if (fields.Length > 0)
             {
@@ -150,11 +150,11 @@ namespace EasyApp
             }
         }
 
-        private void writeOptions<T>(LogLevel loglevel, Func<KeyAttribute, FieldInfo, string> formatValue)
+        private void writeOptions<T>(LogLevel loglevel, Func<FieldAttribute, FieldInfo, string> formatValue)
         {
             var flagsFields = AppArgs.CollectFields<T, FlagAttribute>();
             var optionsFields = AppArgs.CollectFields<T, OptionAttribute>();
-            var parametersFields = AppArgs.CollectFields<T, ValueAttribute>();
+            var parametersFields = AppArgs.CollectFields<T, ParameterAttribute>();
 
             var flagsMaxWidth = maxOrZero(flagsFields, x => x.Attribute.LongKey?.Length ?? 0) + "  - , --  ".Length;
             var optionsMaxWidth = maxOrZero(optionsFields, x => (x.Attribute.LongKey?.Length ?? 0) + getName(x).Length + "  - , -- <>  ".Length);
@@ -188,7 +188,7 @@ namespace EasyApp
 
             var flagsFields = AppArgs.CollectFields<T, FlagAttribute>();
             var optionsFields = AppArgs.CollectFields<T, OptionAttribute>();
-            var parametersFields = AppArgs.CollectFields<T, ValueAttribute>();
+            var parametersFields = AppArgs.CollectFields<T, ParameterAttribute>();
 
             if (flagsFields.Length > 0)
             {
