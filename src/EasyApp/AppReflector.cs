@@ -10,7 +10,7 @@ namespace EasyApp
 
             foreach (var field in typeof(TOptions).GetFields())
             {
-                var attr = field.GetCustomAttribute<FieldAttribute>();
+                var attr = field.GetCustomAttribute<MemberAttribute>();
                 if (attr != null)
                 {
                     var output = field.GetCustomAttribute<OutputAttribute>();
@@ -20,7 +20,7 @@ namespace EasyApp
 
             foreach (var property in typeof(TOptions).GetProperties())
             {
-                var attr = property.GetCustomAttribute<FieldAttribute>();
+                var attr = property.GetCustomAttribute<MemberAttribute>();
                 if (attr != null)
                 {
                     var output = property.GetCustomAttribute<OutputAttribute>();

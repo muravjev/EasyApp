@@ -1,6 +1,6 @@
 ﻿namespace EasyApp
 {
-    public class FlagAttribute : FieldAttribute
+    public class FlagAttribute : MemberAttribute
     {
         private static readonly OutputAttribute defaultOutput = new OutputAttribute("Options");
 

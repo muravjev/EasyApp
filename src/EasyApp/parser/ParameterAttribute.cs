@@ -1,6 +1,6 @@
 ﻿namespace EasyApp
 {
-    public class ParameterAttribute : FieldAttribute
+    public class ParameterAttribute : MemberAttribute
     {
         private static readonly OutputAttribute defaultOutput = new OutputAttribute("Parameters");
 

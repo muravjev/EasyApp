@@ -8,7 +8,7 @@
     }
 
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false)]
-    public abstract class FieldAttribute : Attribute
+    public abstract class MemberAttribute : Attribute
     {
         // Whether this Member (Flag) will break the further parsing.
         public readonly bool IsBreaker;
@@ -32,7 +32,7 @@
 
         public abstract OutputAttribute DefaultOutput { get; }
 
-        protected FieldAttribute(string? name, string? shortKey, string? longKey, string description, bool isRequired, bool isBreaker = false)
+        protected MemberAttribute(string? name, string? shortKey, string? longKey, string description, bool isRequired, bool isBreaker = false)
         {
             Name = name;
             ShortKey = shortKey;

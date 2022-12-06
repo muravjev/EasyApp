@@ -4,7 +4,7 @@ namespace EasyApp
 {
     public abstract class Member
     {
-        public readonly FieldAttribute Attribute;
+        public readonly MemberAttribute Attribute;
 
         public readonly OutputAttribute Output;
 
@@ -18,7 +18,7 @@ namespace EasyApp
 
         public abstract void SetValue(object? instance, object? value);
 
-        protected Member(FieldAttribute attribute, OutputAttribute? output, MemberInfo info, Type type)
+        protected Member(MemberAttribute attribute, OutputAttribute? output, MemberInfo info, Type type)
         {
             Attribute = attribute;
             Output = output ?? attribute.DefaultOutput;
@@ -32,7 +32,7 @@ namespace EasyApp
     {
         private readonly FieldInfo FieldInfo;
 
-        public FieldMember(FieldAttribute attribute, OutputAttribute? output, FieldInfo fieldInfo)
+        public FieldMember(MemberAttribute attribute, OutputAttribute? output, FieldInfo fieldInfo)
             : base(attribute, output, fieldInfo, fieldInfo.FieldType)
         {
             FieldInfo = fieldInfo;
@@ -52,7 +52,7 @@ namespace EasyApp
     {
         private readonly PropertyInfo PropertyInfo;
 
-        public PropertyMember(FieldAttribute attribute, OutputAttribute? output, PropertyInfo propertyInfo)
+        public PropertyMember(MemberAttribute attribute, OutputAttribute? output, PropertyInfo propertyInfo)
             : base(attribute, output, propertyInfo, propertyInfo.PropertyType)
         {
             PropertyInfo = propertyInfo;

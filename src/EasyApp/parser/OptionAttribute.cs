@@ -1,6 +1,6 @@
 ﻿namespace EasyApp
 {
-    public class OptionAttribute : FieldAttribute
+    public class OptionAttribute : MemberAttribute
     {
         private static readonly OutputAttribute defaultOutput = new OutputAttribute("Options");
 
