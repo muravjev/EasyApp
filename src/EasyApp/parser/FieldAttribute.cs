@@ -1,5 +1,12 @@
 ﻿namespace EasyApp
 {
+    public enum MemberType
+    {
+        Flag,
+        Option,
+        Parameter
+    }
+
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false)]
     public abstract class FieldAttribute : Attribute
     {
@@ -23,6 +30,8 @@
 
         // Used in validation of an Option and Parameter that value is not default.
         public readonly bool IsRequired;
+
+        public abstract MemberType Type { get; }
 
         protected FieldAttribute(int order, string? name, string? shortKey, string? longKey, string description, bool isRequired, bool isBreaker = false)
         {

@@ -2,6 +2,8 @@
 {
     public class FlagAttribute : FieldAttribute
     {
+        public override MemberType Type => MemberType.Flag;
+
         public FlagAttribute(int order, char shortKey, string longKey, string description, bool isBreaker = false)
             : base(order, null, shortKey == default ? null : shortKey.ToString(), longKey, description, false, isBreaker) { }
 

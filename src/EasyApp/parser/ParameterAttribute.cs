@@ -2,6 +2,8 @@
 {
     public class ParameterAttribute : FieldAttribute
     {
+        public override MemberType Type => MemberType.Parameter;
+
         public ParameterAttribute(int order, string name, string description, bool isRequired = true)
             : base(order, name, null, null, description, isRequired) { }
 

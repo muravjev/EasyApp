@@ -2,6 +2,8 @@
 {
     public class OptionAttribute : FieldAttribute
     {
+        public override MemberType Type => MemberType.Option;
+
         public OptionAttribute(int order, char shortKey, string longKey, string description, string? name = null, bool isRequired = true)
             : base(order, name, shortKey.ToString(), longKey, description, isRequired) { }
 
