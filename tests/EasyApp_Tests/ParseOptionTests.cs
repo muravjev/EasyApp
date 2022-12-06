@@ -14,6 +14,22 @@ namespace EasyApp
         }
 
         [Test]
+        [TestCase("--option")]
+        [TestCase("--option:")]
+        [TestCase("--option=")]
+        public void NoParameterFailed(string args)
+        {
+            var result = new AppArgs().Parse<Options<string>>(args);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.IsParsed, Is.EqualTo(false));
+                Assert.That(result.Options.Option, Is.EqualTo(default));
+                Assert.That(result.Exception, Is.TypeOf<AppException>());
+            });
+        }
+
+        [Test]
         [TestCase("true", true)]
         [TestCase("True", true)]
         [TestCase("TRUE", true)]

@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
-using System.Reflection;
+using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 namespace EasyApp
 {
@@ -47,23 +48,43 @@ namespace EasyApp
 
         private int ParameterIndex = 0;
 
-        private readonly Dictionary<string, Member> Flags;
+        private readonly Member[] Members;
 
-        private readonly Dictionary<string, Member> Options;
+        private readonly Dictionary<string, Member> ShortKeyMembers;
 
-        private readonly Member[] Parameters;
+        private readonly Dictionary<string, Member> LongKeyMembers;
 
-        internal Parser(string[] args, Dictionary<string, Member> flags, Dictionary<string, Member> options, Member[] parameters)
+        private readonly Member[] ParameterMembers;
+
+        internal Parser(string[] args, Member[] members, Dictionary<string, Member> shortKeyMembers, Dictionary<string, Member> longKeyMembers, Member[] parameters)
         {
             Result = new T();
             Args = new Stack<string>(args);
             IsBreaked = args.Length == 0;
-            Flags = flags;
-            Options = options;
-            Parameters = parameters;
+            Members = members;
+            ShortKeyMembers = shortKeyMembers;
+            LongKeyMembers = longKeyMembers;
+            ParameterMembers = parameters;
         }
 
-        private void setFieldValue(Member member, string value)
+        private Member? getKeyMember(string key, string name)
+        {
+            if (key == "-")
+            {
+                return ShortKeyMembers.GetValueOrDefault(name);
+            }
+
+            if (key == "--")
+            {
+                return LongKeyMembers.GetValueOrDefault(name);
+            }
+
+            Debug.Assert(key == "/");
+
+            return LongKeyMembers.GetValueOrDefault(name) ?? ShortKeyMembers.GetValueOrDefault(name);
+        }
+
+        private void setTypedValue(Member member, string value)
         {
             try
             {
@@ -74,117 +95,103 @@ namespace EasyApp
             }
             catch (Exception e)
             {
-                throw new AppException($"Failed to parse '{value}' as {member.Type.Name}.", e);
+                throw new AppException($"Failed to conert '{value}' as {member.Type.Name}.", e);
             }
         }
 
-        private bool parseSkipper(string arg)
+        private bool parseKey(string arg)
         {
+            if (!ParseKeys)
+            {
+                return false;
+            }
+
             if (arg == "--")
             {
                 ParseKeys = false;
+                return true;
             }
 
-            return !ParseKeys;
-        }
-
-        private bool parseFlag(string arg)
-        {
-            var flag = Flags.GetValueOrDefault(arg);
-            if (flag == null)
+            var regex = new Regex(@"(--|-|\/)([^:=]+)[:=]?(.*)?", RegexOptions.Compiled);
+            var matches = regex.Matches(arg);
+            if (matches.Count == 0)
             {
-                return false;
-            }
-
-            flag.SetValue(Result, true);
-
-            if (flag.Attribute.IsBreaker)
-            {
-                IsBreaked = true;
-            }
-
-            return true;
-        }
-
-        private string? popNextNotNullValue()
-        {
-            while (Args.Count > 0)
-            {
-                var value = Args.Pop();
-
-                if (!string.IsNullOrEmpty(value))
+                if (arg.StartsWith("-") || arg.StartsWith("/"))
                 {
-                    return value;
+                    throw new AppException($"Invalid Key '{arg}'.");
                 }
-            }
 
-            return null;
-        }
-
-        private bool parseOption(string arg)
-        {
-            var option = Options.GetValueOrDefault(arg);
-            if (option == null)
-            {
                 return false;
             }
 
-            var value = popNextNotNullValue();
+            Debug.Assert(matches.Count == 1);
 
-            if (value == null)
+            var values = matches[0].Groups.Values.Skip(1).Select(x => x.Value).ToArray();
+            Debug.Assert(values.Length == 3);
+
+            var key = values[0];
+            var name = values[1];
+            var value = values[2];
+
+            var member = getKeyMember(key, name);
+            if (member == null)
             {
-                throw new AppException($"Missing option '{option.Attribute.Name}' value '{arg}'");
+                throw new AppException($"Unknown Key '{arg}'.");
             }
 
-            setFieldValue(option, value);
+            if (member.Attribute.Type == MemberType.Flag)
+            {
+                Debug.Assert(string.IsNullOrEmpty(value));
+
+                if (member.Attribute.IsBreaker)
+                {
+                    IsBreaked = true;
+                }
+
+                member.SetValue(Result, true);
+            }
+            else
+            {
+                Debug.Assert(member.Attribute.Type == MemberType.Option);
+
+                if (string.IsNullOrEmpty(value))
+                {
+                    if (Args.Count > 0)
+                    {
+                        value = Args.Pop();
+                    }
+
+                    if (string.IsNullOrEmpty(value))
+                    {
+                        throw new AppException($"Missing value for Option '{key}{name}'.");
+                    }
+                }
+
+                setTypedValue(member, value);
+            }
+
             return true;
-        }
-
-        private bool parseOption(string arg, char separator)
-        {
-            var i = arg.IndexOf(separator);
-            if (i == -1)
-            {
-                return false;
-            }
-
-            var option = Options.GetValueOrDefault(arg.Substring(0, i));
-            if (option == null)
-            {
-                return false;
-            }
-
-            setFieldValue(option, arg.Substring(i + 1));
-            return true;
-        }
-
-        private void validateThatKeysAreParsed(string arg)
-        {
-            if (arg.StartsWith("-") || arg.StartsWith("/"))
-            {
-                throw new AppException($"Unknown key '{arg}'.");
-            }
         }
 
         private void parseParameter(string arg)
         {
-            if (ParameterIndex >= Parameters.Length)
+            if (ParameterIndex >= ParameterMembers.Length)
             {
                 throw new AppException($"Unexpected parameter '{arg}'");
             }
 
-            var parameter = Parameters[ParameterIndex++];
+            var parameter = ParameterMembers[ParameterIndex++];
 
-            setFieldValue(parameter, arg);
+            setTypedValue(parameter, arg);
         }
 
-        private void validateThatRequiredFieldsAreFilled(IEnumerable<Member> members, string name)
+        private void validateThatRequiredMemberssAreFilled()
         {
-            foreach (var member in members)
+            foreach (var member in Members)
             {
                 if (member.Attribute.IsRequired && member.GetValue(Result) == null)
                 {
-                    throw new AppException($"Value for {name} '{member.Attribute.Name}' is required.");
+                    throw new AppException($"Value for {member.Attribute.Type.ToString().ToLower()} '{member.Attribute.Name}' is required.");
                 }
             }
         }
@@ -195,39 +202,9 @@ namespace EasyApp
             {
                 var arg = Args.Pop();
 
-                if (string.IsNullOrEmpty(arg))
+                if (parseKey(arg))
                 {
                     continue;
-                }
-
-                if (ParseKeys)
-                {
-                    if (parseSkipper(arg))
-                    {
-                        continue;
-                    }
-
-                    if (parseFlag(arg))
-                    {
-                        continue;
-                    }
-
-                    if (parseOption(arg))
-                    {
-                        continue;
-                    }
-
-                    if (parseOption(arg, ':'))
-                    {
-                        continue;
-                    }
-
-                    if (parseOption(arg, '='))
-                    {
-                        continue;
-                    }
-
-                    validateThatKeysAreParsed(arg);
                 }
 
                 parseParameter(arg);
@@ -238,8 +215,7 @@ namespace EasyApp
                 return;
             }
 
-            validateThatRequiredFieldsAreFilled(Options.Values, "option");
-            validateThatRequiredFieldsAreFilled(Parameters, "parameter");
+            validateThatRequiredMemberssAreFilled();
         }
 
         internal Result<T> Parse()
@@ -263,62 +239,17 @@ namespace EasyApp
 
     public sealed class AppArgs : IAppArgs
     {
-        internal static Member[] CollectMembers<TOptions, TAttribute>() where TAttribute : FieldAttribute
-        {
-            var fields = typeof(TOptions)
-                .GetFields()
-                .Where(field => Attribute.IsDefined(field, typeof(TAttribute)))
-                .Select(field => (Member)new FieldMember(field, field.GetCustomAttribute<TAttribute>()!));
-
-            var props = typeof(TOptions)
-                .GetProperties()
-                .Where(prop => Attribute.IsDefined(prop, typeof(TAttribute)))
-                .Select(prop => (Member)new PropertyMember(prop, prop.GetCustomAttribute<TAttribute>()!));
-
-            var members = fields.Concat(props)
-                .OrderBy(member => member.Attribute.Order)
-                .ThenBy(member => member.MetadataToken)
-                .ToArray();
-
-            return members;
-        }
-
-        private static Dictionary<string, Member> toFieldsByKeyMap(Member[] members)
-        {
-            var byKey = new Dictionary<string, Member>();
-
-            foreach (var member in members)
-            {
-                var attr = member.Attribute;
-
-                if (!string.IsNullOrEmpty(attr.ShortKey))
-                {
-                    byKey.Add($"-{attr.ShortKey}", member);
-                    byKey.Add($"/{attr.ShortKey}", member);
-                }
-
-                if (!string.IsNullOrEmpty(attr.LongKey))
-                {
-                    byKey.Add($"--{attr.LongKey}", member);
-                    byKey.Add($"/{attr.LongKey}", member);
-                }
-            }
-
-            return byKey;
-        }
-
         public Result<T> Parse<T>(params string[] args) where T : new()
         {
-            var flagsFields = CollectMembers<T, FlagAttribute>();
-            var optionsFields = CollectMembers<T, OptionAttribute>();
-            var parametersFields = CollectMembers<T, ParameterAttribute>();
+            var members = AppReflector.CollectMembers<T>();
 
-            var flagsByKey = toFieldsByKeyMap(flagsFields);
-            var optionsByKey = toFieldsByKeyMap(optionsFields);
+            var shortKeyMembers = members.GroupByKey(x => x.Attribute.ShortKey);
+            var longKeyMembers = members.GroupByKey(x => x.Attribute.LongKey);
+            var parameterMembers = members.Filter(MemberType.Parameter);
 
             var nonEmptyArgs = args.Where(x => !string.IsNullOrEmpty(x)).Reverse().ToArray();
 
-            var parser = new Parser<T>(nonEmptyArgs, flagsByKey, optionsByKey, parametersFields);
+            var parser = new Parser<T>(nonEmptyArgs, members, shortKeyMembers, longKeyMembers, parameterMembers);
 
             return parser.Parse();
         }
