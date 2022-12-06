@@ -10,9 +10,6 @@
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false)]
     public abstract class FieldAttribute : Attribute
     {
-        // Parameters order parsing! Order of Flags, Options, Parameters in Usage.
-        public readonly int Order;
-
         // Whether this Member (Flag) will break the further parsing.
         public readonly bool IsBreaker;
 
@@ -33,9 +30,10 @@
 
         public abstract MemberType Type { get; }
 
-        protected FieldAttribute(int order, string? name, string? shortKey, string? longKey, string description, bool isRequired, bool isBreaker = false)
+        public abstract OutputAttribute DefaultOutput { get; }
+
+        protected FieldAttribute(string? name, string? shortKey, string? longKey, string description, bool isRequired, bool isBreaker = false)
         {
-            Order = order;
             Name = name;
             ShortKey = shortKey;
             LongKey = longKey;

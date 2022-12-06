@@ -2,18 +2,16 @@
 {
     public class OptionAttribute : FieldAttribute
     {
+        private static readonly OutputAttribute defaultOutput = new OutputAttribute("Options");
+
         public override MemberType Type => MemberType.Option;
 
-        public OptionAttribute(int order, char shortKey, string longKey, string description, string? name = null, bool isRequired = true)
-            : base(order, name, shortKey.ToString(), longKey, description, isRequired) { }
+        public override OutputAttribute DefaultOutput => defaultOutput;
 
         public OptionAttribute(char shortKey, string longKey, string description, string? name = null, bool isRequired = true)
-            : this(1, shortKey, longKey, description, name, isRequired) { }
-
-        public OptionAttribute(int order, string longKey, string description, string? name = null, bool isRequired = true)
-            : base(order, name, null, longKey, description, isRequired) { }
+            : base(name, shortKey.ToString(), longKey, description, isRequired) { }
 
         public OptionAttribute(string longKey, string description, string? name = null, bool isRequired = true)
-            : this(1, longKey, description, name, isRequired) { }
+            : base(name, null, longKey, description, isRequired) { }
     }
 }

@@ -13,7 +13,8 @@ namespace EasyApp
                 var attr = field.GetCustomAttribute<FieldAttribute>();
                 if (attr != null)
                 {
-                    members.Add(new FieldMember(field, attr));
+                    var output = field.GetCustomAttribute<OutputAttribute>();
+                    members.Add(new FieldMember(attr, output, field));
                 }
             }
 
@@ -22,7 +23,8 @@ namespace EasyApp
                 var attr = property.GetCustomAttribute<FieldAttribute>();
                 if (attr != null)
                 {
-                    members.Add(new PropertyMember(property, attr));
+                    var output = property.GetCustomAttribute<OutputAttribute>();
+                    members.Add(new PropertyMember(attr, output, property));
                 }
             }
 
@@ -51,6 +53,5 @@ namespace EasyApp
 
             return byKey;
         }
-
     }
 }

@@ -2,12 +2,13 @@
 {
     public class ParameterAttribute : FieldAttribute
     {
+        private static readonly OutputAttribute defaultOutput = new OutputAttribute("Parameters");
+
         public override MemberType Type => MemberType.Parameter;
 
-        public ParameterAttribute(int order, string name, string description, bool isRequired = true)
-            : base(order, name, null, null, description, isRequired) { }
+        public override OutputAttribute DefaultOutput => defaultOutput;
 
         public ParameterAttribute(string name, string description, bool isRequired = true)
-            : this(1, name, description, isRequired) { }
+            : base(name, null, null, description, isRequired) { }
     }
 }
