@@ -1,16 +1,10 @@
 ﻿using EasyApp.parser;
 using EasyApp.processor;
-using System.Text;
 
 namespace EasyApp
 {
-    public sealed class EasyApp<TOptions>
+    public sealed class EasyApp<TOptions> : EasyAppSettings
     {
-        public int UnhandledExceptionExitCode = -1;
-        public int ParseErrorExitCode = -2;
-
-        public Encoding OutputEncoding = Encoding.Unicode;
-
         #region Handlers
 
         internal readonly ProcessorHandlers<TOptions> Handlers = new ProcessorHandlers<TOptions>();

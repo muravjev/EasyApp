@@ -20,9 +20,14 @@
             Members = members;
         }
 
+        private IProcessorHandler<TOptions>? get<T>()
+        {
+            return Settings.Handlers.GetValueOrDefault(typeof(T));
+        }
+
         private IProcessorHandler<TOptions> getOrCreate<T>(Func<IProcessorHandler<TOptions>> ctor)
         {
-            return Settings.Handlers.GetValueOrDefault(typeof(T)) ?? ctor();
+            return get<T>() ?? ctor();
         }
 
         private IProcessorHandler<TOptions> getHandler(EasyAppResult<TOptions> result)
@@ -37,7 +42,7 @@
                 return getOrCreate<ErrorHandler<TOptions>>(() => new ErrorHandler<TOptions>(Settings));
             }
 
-            var handler = Settings.Handlers.GetValueOrDefault(typeof(TOptions));
+            var handler = get<TOptions>();
             if (handler == null)
             {
                 throw new Exception("Process handler is not defined");

@@ -4,7 +4,7 @@ namespace EasyApp.parser
 {
     internal static class ParserBuilder
     {
-        public static IParser<TOptions> Build<TOptions>(EasyApp<TOptions> settings, Member[] members)
+        public static IParser<TOptions> Build<TOptions>(EasyAppSettings settings, Member[] members)
         {
             var shortKeyMembers = members.GroupByKey(x => x.Attribute.ShortKey);
             var longKeyMembers = members.GroupByKey(x => x.Attribute.LongKey);
