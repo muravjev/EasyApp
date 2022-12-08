@@ -2,12 +2,12 @@
 
 namespace EasyApp.parser
 {
-    public interface IParser<TOptions>
+    internal interface IParser<TOptions>
     {
         EasyAppResult<TOptions> Parse(string[] args);
     }
 
-    public sealed class ParserState<TOptions>
+    internal sealed class ParserState<TOptions>
     {
         public readonly TOptions Result;
 
@@ -27,7 +27,7 @@ namespace EasyApp.parser
         }
     }
 
-    public sealed class Parser<TOptions> : IParser<TOptions>
+    internal sealed class Parser<TOptions> : IParser<TOptions>
     {
         private readonly IKeyParser<TOptions> KeyParser;
 

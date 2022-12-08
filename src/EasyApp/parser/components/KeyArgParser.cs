@@ -3,14 +3,14 @@ using System.Text.RegularExpressions;
 
 namespace EasyApp.parser.components
 {
-    public record Arg(string key, string name, string value);
+    internal record Arg(string key, string name, string value);
 
-    public interface IKeyArgParser
+    internal interface IKeyArgParser
     {
         Arg? Parse(string arg);
     }
 
-    public sealed class KeyArgParser : IKeyArgParser
+    internal sealed class KeyArgParser : IKeyArgParser
     {
         public Arg? Parse(string arg)
         {

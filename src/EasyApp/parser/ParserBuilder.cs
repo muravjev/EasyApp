@@ -2,12 +2,12 @@
 
 namespace EasyApp.parser
 {
-    public interface IParserBuilder<TOptions>
+    internal interface IParserBuilder<TOptions>
     {
         IParser<TOptions> Build();
     }
 
-    public sealed class ParserBuilder<TOptions> : IParserBuilder<TOptions>
+    internal sealed class ParserBuilder<TOptions> : IParserBuilder<TOptions>
     {
         public IParser<TOptions> Build()
         {

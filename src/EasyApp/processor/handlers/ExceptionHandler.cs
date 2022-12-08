@@ -2,7 +2,7 @@
 
 namespace EasyApp.processor
 {
-    public sealed class ExceptionHandler<TOptions> : IProcessorHandler<TOptions>
+    internal sealed class ExceptionHandler<TOptions> : IProcessorHandler<TOptions>
     {
         public int Handle(EasyAppResult<TOptions> result, IEasyAppConsole console)
         {

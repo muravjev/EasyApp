@@ -1,13 +1,13 @@
 ﻿namespace EasyApp.processor
 {
-    public interface IProcessorHandler<TOptions>
+    internal interface IProcessorHandler<TOptions>
     {
         int Handle(EasyAppResult<TOptions> result, IEasyAppConsole console);
     }
 
-    public sealed class ProcessorHandlers<TOptions> : Dictionary<Type, IProcessorHandler<TOptions>> { }
+    internal sealed class ProcessorHandlers<TOptions> : Dictionary<Type, IProcessorHandler<TOptions>> { }
 
-    public sealed class ProcessorHandler<TOptions> : IProcessorHandler<TOptions>
+    internal sealed class ProcessorHandler<TOptions> : IProcessorHandler<TOptions>
     {
         public readonly Func<EasyAppResult<TOptions>, IEasyAppConsole, int> Func;
 

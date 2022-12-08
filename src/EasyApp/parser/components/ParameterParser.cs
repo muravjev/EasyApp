@@ -1,11 +1,11 @@
 ﻿namespace EasyApp.parser.components
 {
-    public interface IParameterParser<TOptions>
+    internal interface IParameterParser<TOptions>
     {
         void Parse(ParserState<TOptions> state, string arg);
     }
 
-    public sealed class ParameterParser<TOptions> : IParameterParser<TOptions>
+    internal sealed class ParameterParser<TOptions> : IParameterParser<TOptions>
     {
         private readonly IValueConverter ValueConverter;
 

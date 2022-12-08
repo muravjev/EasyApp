@@ -2,7 +2,7 @@
 
 namespace EasyApp
 {
-    public abstract class Member
+    internal abstract class Member
     {
         public readonly MemberAttribute Attribute;
 
@@ -28,7 +28,7 @@ namespace EasyApp
         }
     }
 
-    public sealed class FieldMember : Member
+    internal sealed class FieldMember : Member
     {
         private readonly FieldInfo FieldInfo;
 
@@ -49,7 +49,7 @@ namespace EasyApp
         }
     }
 
-    public sealed class PropertyMember : Member
+    internal sealed class PropertyMember : Member
     {
         private readonly PropertyInfo PropertyInfo;
 
@@ -72,7 +72,7 @@ namespace EasyApp
 
     internal static class Reflector
     {
-        internal static Member[] CollectMembers<TOptions>()
+        public static Member[] CollectMembers<TOptions>()
         {
             var members = new List<Member>();
 
@@ -99,12 +99,12 @@ namespace EasyApp
             return members.ToArray();
         }
 
-        internal static Member[] Filter(this Member[] members, MemberType type)
+        public static Member[] Filter(this Member[] members, MemberType type)
         {
             return members.Where(x => x.Attribute.Type == type).ToArray();
         }
 
-        internal static Dictionary<string, Member> GroupByKey(this Member[] members, Func<Member, string?> selector)
+        public static Dictionary<string, Member> GroupByKey(this Member[] members, Func<Member, string?> selector)
         {
             var byKey = new Dictionary<string, Member>();
 
@@ -123,7 +123,7 @@ namespace EasyApp
             return byKey;
         }
 
-        internal static TValue GetValue<TAttribute, TOptions, TValue>(this Member[] members, TOptions options, TValue defaultValue)
+        public static TValue GetValue<TAttribute, TOptions, TValue>(this Member[] members, TOptions options, TValue defaultValue)
         {
             var member = members.FirstOrDefault(x => x.Attribute.GetType() == typeof(TAttribute));
             if (member == null)
@@ -140,7 +140,7 @@ namespace EasyApp
             return (TValue)value;
         }
 
-        internal static bool GetValue<TAttribute, TOptions>(this Member[] members, TOptions options)
+        public static bool GetValue<TAttribute, TOptions>(this Member[] members, TOptions options)
         {
             return members.GetValue<TAttribute, TOptions, bool>(options, false);
         }

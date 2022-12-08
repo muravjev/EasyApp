@@ -2,12 +2,12 @@
 
 namespace EasyApp.parser.components
 {
-    public interface IValueConverter
+    internal interface IValueConverter
     {
         object? Convert(Member member, string value);
     }
 
-    public sealed class ValueConverter : IValueConverter
+    internal sealed class ValueConverter : IValueConverter
     {
         public object? Convert(Member member, string value)
         {

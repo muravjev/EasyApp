@@ -2,7 +2,7 @@
 
 namespace EasyApp.processor.components
 {
-    public interface IAppInfoProvider
+    internal interface IAppInfoProvider
     {
         string Product { get; }
         string Version { get; }
@@ -12,7 +12,7 @@ namespace EasyApp.processor.components
         bool IsRelease { get; }
     }
 
-    public sealed class AppInfoProvider : IAppInfoProvider
+    internal sealed class AppInfoProvider : IAppInfoProvider
     {
         private readonly string Product;
         private readonly string Version;

@@ -2,12 +2,12 @@
 
 namespace EasyApp.parser.components
 {
-    public interface IKeyMemberLocator
+    internal interface IKeyMemberLocator
     {
         Member? GetMember(string key, string name);
     }
 
-    public sealed class KeyMemberLocator : IKeyMemberLocator
+    internal sealed class KeyMemberLocator : IKeyMemberLocator
     {
         private readonly Dictionary<string, Member> ShortKeyMembers;
 

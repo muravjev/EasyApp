@@ -1,11 +1,11 @@
 ﻿namespace EasyApp.parser.components
 {
-    public interface IMembersValidator<TOptions>
+    internal interface IMembersValidator<TOptions>
     {
         void Validate(TOptions options);
     }
 
-    public sealed class MembersValidator<TOptions> : IMembersValidator<TOptions>
+    internal sealed class MembersValidator<TOptions> : IMembersValidator<TOptions>
     {
         private readonly Member[] Members;
 

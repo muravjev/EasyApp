@@ -2,7 +2,7 @@
 
 namespace EasyApp.processor
 {
-    public sealed class HelpHandler<TOptions> : IProcessorHandler<TOptions>
+    internal sealed class HelpHandler<TOptions> : IProcessorHandler<TOptions>
     {
         private readonly IValueFetcher<TOptions> ValueFetcher;
 

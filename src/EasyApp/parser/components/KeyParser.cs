@@ -2,12 +2,12 @@
 
 namespace EasyApp.parser.components
 {
-    public interface IKeyParser<TOptions>
+    internal interface IKeyParser<TOptions>
     {
         bool Parse(ParserState<TOptions> state, string arg);
     }
 
-    public sealed class KeyParser<TOptions> : IKeyParser<TOptions>
+    internal sealed class KeyParser<TOptions> : IKeyParser<TOptions>
     {
         private readonly IKeyArgParser ArgParser;
 

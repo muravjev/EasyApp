@@ -2,12 +2,12 @@
 
 namespace EasyApp.processor
 {
-    public interface IProcessor<TOptions>
+    internal interface IProcessor<TOptions>
     {
         int Process(EasyAppResult<TOptions> result);
     }
 
-    public sealed class Processor<TOptions> : IProcessor<TOptions>
+    internal sealed class Processor<TOptions> : IProcessor<TOptions>
     {
         private readonly ProcessorHandlers<TOptions> Handlers;
 

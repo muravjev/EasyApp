@@ -2,12 +2,12 @@
 
 namespace EasyApp.processor
 {
-    public interface IProcessorBuilder<TOptions>
+    internal interface IProcessorBuilder<TOptions>
     {
         IProcessor<TOptions> Build(ProcessorHandlers<TOptions> handlers, TOptions options);
     }
 
-    public sealed class ProcessorBuilder<TOptions> : IProcessorBuilder<TOptions>
+    internal sealed class ProcessorBuilder<TOptions> : IProcessorBuilder<TOptions>
     {
         private readonly EasyAppSettings Settings;
 

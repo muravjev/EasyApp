@@ -1,6 +1,6 @@
 ﻿namespace EasyApp.processor.components
 {
-    public interface IValueFetcher<TOptions>
+    internal interface IValueFetcher<TOptions>
     {
         TValue Fetch<TAttribute, TValue>(TOptions options, TValue defaultValue) where TAttribute : Attribute;
 
@@ -8,7 +8,7 @@
     }
 
     // TODO: Use extension instead of ValueFetcher.
-    public sealed class ValueFetcher<TOptions> : IValueFetcher<TOptions>
+    internal sealed class ValueFetcher<TOptions> : IValueFetcher<TOptions>
     {
         private readonly Member[] Members;
 
