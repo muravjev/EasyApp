@@ -72,13 +72,13 @@ namespace EasyApp
 
     internal static class Reflector
     {
-        public static Member[] CollectMembers<TOptions>()
+        public static Member[] CollectMembers<TOptions, TAttribute>() where TAttribute : MemberAttribute
         {
             var members = new List<Member>();
 
             foreach (var field in typeof(TOptions).GetFields())
             {
-                var attr = field.GetCustomAttribute<MemberAttribute>();
+                var attr = field.GetCustomAttribute<TAttribute>();
                 if (attr != null)
                 {
                     var output = field.GetCustomAttribute<OutputAttribute>();
@@ -88,7 +88,7 @@ namespace EasyApp
 
             foreach (var property in typeof(TOptions).GetProperties())
             {
-                var attr = property.GetCustomAttribute<MemberAttribute>();
+                var attr = property.GetCustomAttribute<TAttribute>();
                 if (attr != null)
                 {
                     var output = property.GetCustomAttribute<OutputAttribute>();
@@ -97,6 +97,11 @@ namespace EasyApp
             }
 
             return members.ToArray();
+        }
+
+        public static Member[] CollectMembers<TOptions>()
+        {
+            return CollectMembers<TOptions, MemberAttribute>();
         }
 
         public static Member[] Filter(this Member[] members, MemberType type)
@@ -123,7 +128,7 @@ namespace EasyApp
             return byKey;
         }
 
-        public static TValue GetValue<TAttribute, TOptions, TValue>(this Member[] members, TOptions options, TValue defaultValue)
+        public static TValue GetValue<TAttribute, TValue>(this Member[] members, object? options, TValue defaultValue)
         {
             var member = members.FirstOrDefault(x => x.Attribute.GetType() == typeof(TAttribute));
             if (member == null)
@@ -140,9 +145,9 @@ namespace EasyApp
             return (TValue)value;
         }
 
-        public static bool GetValue<TAttribute, TOptions>(this Member[] members, TOptions options)
+        public static bool GetValue<TAttribute>(this Member[] members, object? options)
         {
-            return members.GetValue<TAttribute, TOptions, bool>(options, false);
+            return members.GetValue<TAttribute, bool>(options, false);
         }
     }
 }

@@ -1,6 +1,4 @@
-﻿using EasyApp.processor.components;
-
-namespace EasyApp.processor
+﻿namespace EasyApp.processor
 {
     internal interface IProcessor<TOptions>
     {
@@ -13,13 +11,13 @@ namespace EasyApp.processor
 
         private readonly IEasyAppConsole Console;
 
-        private readonly IValueFetcher<TOptions> ValueFetcher;
+        private readonly Member[] Members;
 
-        public Processor(IEasyAppConsole console, ProcessorHandlers<TOptions> handlers, IValueFetcher<TOptions> valueFetcher)
+        public Processor(IEasyAppConsole console, ProcessorHandlers<TOptions> handlers, Member[] members)
         {
             Console = console;
             Handlers = handlers;
-            ValueFetcher = valueFetcher;
+            Members = members;
         }
 
         private IProcessorHandler<TOptions> getOrCreate<T>(Func<IProcessorHandler<TOptions>> ctor)
@@ -31,7 +29,7 @@ namespace EasyApp.processor
         {
             if (result.IsHelp)
             {
-                return getOrCreate<HelpHandler<TOptions>>(() => new HelpHandler<TOptions>(ValueFetcher));
+                return getOrCreate<HelpHandler<TOptions>>(() => new HelpHandler<TOptions>(Members));
             }
 
             if (result.Exception != null)

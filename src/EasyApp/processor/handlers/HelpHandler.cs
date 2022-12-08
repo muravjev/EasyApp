@@ -1,27 +1,25 @@
-﻿using EasyApp.processor.components;
-
-namespace EasyApp.processor
+﻿namespace EasyApp.processor
 {
     internal sealed class HelpHandler<TOptions> : IProcessorHandler<TOptions>
     {
-        private readonly IValueFetcher<TOptions> ValueFetcher;
+        private readonly Member[] Members;
 
-        public HelpHandler(IValueFetcher<TOptions> valueFetcher)
+        public HelpHandler(Member[] members)
         {
-            ValueFetcher = valueFetcher;
+            Members = members;
         }
 
         public int Handle(EasyAppResult<TOptions> result, IEasyAppConsole console)
         {
-            if (ValueFetcher.Fetch<VersionAttribute>(result.Options))
+            if (Members.GetValue<VersionAttribute>(result.Options))
             {
                 console.Version();
                 return 0;
             }
 
-            // var isAll = getValue<AllAttribute, bool>(result.Options, false);
+            // var isAll = GetValue<VersionAttribute>(result.Options);
 
-            if (ValueFetcher.Fetch<HelpAttribute>(result.Options))
+            if (Members.GetValue<VersionAttribute>(result.Options))
             {
                 console.Usage(result.Options);
                 return 0;

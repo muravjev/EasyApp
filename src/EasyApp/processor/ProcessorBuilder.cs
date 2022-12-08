@@ -19,12 +19,11 @@ namespace EasyApp.processor
         public IProcessor<TOptions> Build(ProcessorHandlers<TOptions> handlers, TOptions options)
         {
             var members = Reflector.CollectMembers<TOptions>();
-            var valueFetcher = new ValueFetcher<TOptions>(members);
 
-            var logLevel = valueFetcher.Fetch<LogLevelAttribute, LogLevel>(options, LogLevel.Normal);
+            var logLevel = members.GetValue<LogLevelAttribute, LogLevel>(options, LogLevel.Normal);
             var console = new EasyAppConsole(logLevel, new AppInfoProvider(), Settings.Output.Encoding);
 
-            return new Processor<TOptions>(console, handlers, valueFetcher);
+            return new Processor<TOptions>(console, handlers, members);
         }
     }
 }
