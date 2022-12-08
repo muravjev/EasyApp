@@ -10,8 +10,8 @@
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false)]
     public abstract class MemberAttribute : Attribute
     {
-        // Whether this Member (Flag) will break the further parsing.
-        public readonly bool IsBreaker;
+        // Whether this Member (Flag) is Help flag and no further parsing is required.
+        public readonly bool IsHelp;
 
         // Parameter or Option <name>. Used in Usage and errors.
         public readonly string? Name;
@@ -32,14 +32,14 @@
 
         public abstract OutputAttribute DefaultOutput { get; }
 
-        protected MemberAttribute(string? name, string? shortKey, string? longKey, string description, bool isRequired, bool isBreaker = false)
+        protected MemberAttribute(string? name, string? shortKey, string? longKey, string description, bool isRequired, bool isHelp = false)
         {
             Name = name;
             ShortKey = shortKey;
             LongKey = longKey;
             Description = description;
             IsRequired = isRequired;
-            IsBreaker = isBreaker;
+            IsHelp = isHelp;
         }
     }
 }

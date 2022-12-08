@@ -8,9 +8,9 @@ namespace EasyApp
             public T? P1 = default;
         }
 
-        private static Result<Options<T>> parse<T>(string arg)
+        private static EasyAppParserResult<Options<T>> parse<T>(string arg)
         {
-            return new AppArgs().Parse<Options<T>>("--", arg);
+            return Utilities.Parse<Options<T>>("--", arg);
         }
 
         [Test]

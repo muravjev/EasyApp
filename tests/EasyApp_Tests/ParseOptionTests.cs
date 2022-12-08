@@ -8,9 +8,9 @@ namespace EasyApp
             public T? Option = default;
         }
 
-        private static Result<Options<T>> parse<T>(string arg)
+        private static EasyAppParserResult<Options<T>> parse<T>(string arg)
         {
-            return new AppArgs().Parse<Options<T>>("--option", arg);
+            return Utilities.Parse<Options<T>>("--option", arg);
         }
 
         [Test]
@@ -19,7 +19,7 @@ namespace EasyApp
         [TestCase("--option=")]
         public void NoParameterFailed(string args)
         {
-            var result = new AppArgs().Parse<Options<string>>(args);
+            var result = Utilities.Parse<Options<string>>(args);
 
             Assert.Multiple(() =>
             {

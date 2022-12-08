@@ -2,7 +2,7 @@
 
 namespace EasyApp
 {
-    internal static class AppReflector
+    internal static class EasyAppReflector
     {
         internal static Member[] CollectMembers<TOptions>()
         {
@@ -43,6 +43,7 @@ namespace EasyApp
             foreach (var member in members)
             {
                 var key = selector(member);
+
                 if (string.IsNullOrEmpty(key))
                 {
                     continue;
@@ -52,6 +53,28 @@ namespace EasyApp
             }
 
             return byKey;
+        }
+
+        internal static TValue GetValue<TAttribute, TOptions, TValue>(this Member[] members, TOptions options, TValue defaultValue)
+        {
+            var member = members.FirstOrDefault(x => x.Attribute.GetType() == typeof(TAttribute));
+            if (member == null)
+            {
+                return defaultValue;
+            }
+
+            var value = member.GetValue(options);
+            if (value == null)
+            {
+                return defaultValue;
+            }
+
+            return (TValue)value;
+        }
+
+        internal static bool GetValue<TAttribute, TOptions>(this Member[] members, TOptions options)
+        {
+            return members.GetValue<TAttribute, TOptions, bool>(options, false);
         }
     }
 }

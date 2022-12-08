@@ -37,7 +37,6 @@ namespace EasyApp
             var p1 = "foo";
             var p2 = "bar";
 
-            var parser = new AppArgs() as IAppArgs;
             var permutations = GetPermutations(new[] { f1, o1, p1, p2 }, 4);
 
             foreach (var permutation in permutations)
@@ -57,7 +56,7 @@ namespace EasyApp
 
                 args = commandLine.Split(" ");
 
-                var result = parser.Parse<Options>(args);
+                var result = Utilities.Parse<Options>(args);
 
                 Assert.That(result.IsParsed, Is.EqualTo(true));
 
