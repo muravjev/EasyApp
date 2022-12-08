@@ -8,7 +8,7 @@ namespace EasyApp
             public T? Option = default;
         }
 
-        private static EasyAppParserResult<Options<T>> parse<T>(string arg)
+        private static EasyAppResult<Options<T>> parse<T>(string arg)
         {
             return Utilities.Parse<Options<T>>("--option", arg);
         }
@@ -25,7 +25,7 @@ namespace EasyApp
             {
                 Assert.That(result.IsParsed, Is.EqualTo(false));
                 Assert.That(result.Options.Option, Is.EqualTo(default));
-                Assert.That(result.Exception, Is.TypeOf<AppException>());
+                Assert.That(result.Exception, Is.TypeOf<EasyAppException>());
             });
         }
 
@@ -91,7 +91,7 @@ namespace EasyApp
             {
                 Assert.That(result.IsParsed, Is.EqualTo(false));
                 Assert.That(result.Options.Option, Is.EqualTo(default(Foo)));
-                Assert.That(result.Exception, Is.TypeOf<AppException>());
+                Assert.That(result.Exception, Is.TypeOf<EasyAppException>());
             });
         }
 
@@ -183,7 +183,7 @@ namespace EasyApp
             {
                 Assert.That(result.IsParsed, Is.EqualTo(false));
                 Assert.That(result.Options.Option, Is.EqualTo(default(byte)));
-                Assert.That(result.Exception, Is.TypeOf<AppException>());
+                Assert.That(result.Exception, Is.TypeOf<EasyAppException>());
             });
         }
 
@@ -214,7 +214,7 @@ namespace EasyApp
             {
                 Assert.That(result.IsParsed, Is.EqualTo(false));
                 Assert.That(result.Options.Option, Is.EqualTo(default(int)));
-                Assert.That(result.Exception, Is.TypeOf<AppException>());
+                Assert.That(result.Exception, Is.TypeOf<EasyAppException>());
             });
         }
     }

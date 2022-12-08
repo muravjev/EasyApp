@@ -2,36 +2,9 @@
 
 namespace EasyApp
 {
-    public sealed class EasyAppParserResult<TOptions>
-    {
-        // Parse options.
-        public readonly TOptions Options;
-
-        // Whether execution is breaked and help is required (no args or help flag like --version).
-        public readonly bool IsHelp = false;
-
-        // Whether there were an exception during parsing.
-        public readonly Exception? Exception = null;
-
-        // Whether parsing is succeesfull.
-        public bool IsParsed => Exception == null;
-
-        public EasyAppParserResult(TOptions options, bool isHelp)
-        {
-            Options = options;
-            IsHelp = isHelp;
-        }
-
-        public EasyAppParserResult(TOptions options, Exception exception)
-        {
-            Options = options;
-            Exception = exception;
-        }
-    }
-
     public interface IEasyAppParser<TOptions>
     {
-        EasyAppParserResult<TOptions> Parse(string[] args);
+        EasyAppResult<TOptions> Parse(string[] args);
     }
 
     public sealed class EasyAppParserState<TOptions>
@@ -98,7 +71,7 @@ namespace EasyApp
             }
         }
 
-        public EasyAppParserResult<TOptions> Parse(string[] args)
+        public EasyAppResult<TOptions> Parse(string[] args)
         {
             var nonEmptyArgs = args.Where(x => !string.IsNullOrEmpty(x)).Reverse().ToArray();
             var state = new EasyAppParserState<TOptions>(nonEmptyArgs);
@@ -107,16 +80,16 @@ namespace EasyApp
             {
                 parse(state);
             }
-            catch (AppException exception)
+            catch (EasyAppException exception)
             {
-                return new EasyAppParserResult<TOptions>(state.Result, exception);
+                return new EasyAppResult<TOptions>(state.Result, exception);
             }
             catch (Exception exception)
             {
-                return new EasyAppParserResult<TOptions>(state.Result, new AppException("Unknown parse exception.", exception));
+                return new EasyAppResult<TOptions>(state.Result, new EasyAppException("Unknown parse exception.", exception));
             }
 
-            return new EasyAppParserResult<TOptions>(state.Result, state.IsHelp);
+            return new EasyAppResult<TOptions>(state.Result, state.IsHelp);
         }
     }
 }

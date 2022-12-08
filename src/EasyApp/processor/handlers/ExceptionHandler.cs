@@ -4,7 +4,7 @@ namespace EasyApp.processor
 {
     public sealed class ExceptionHandler<TOptions> : IEasyAppHandler<TOptions>
     {
-        public int Handle(EasyAppParserResult<TOptions> result, IEasyAppConsole console)
+        public int Handle(EasyAppResult<TOptions> result, IEasyAppConsole console)
         {
             Debug.Assert(result != null);
             Debug.Assert(result.Exception != null);

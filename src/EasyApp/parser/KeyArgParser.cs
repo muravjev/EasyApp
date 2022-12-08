@@ -20,7 +20,7 @@ namespace EasyApp.parser
             {
                 if (arg.StartsWith("-") || arg.StartsWith("/"))
                 {
-                    throw new AppException($"Invalid Key '{arg}'.");
+                    throw new EasyAppException($"Invalid Key '{arg}'.");
                 }
 
                 return null;

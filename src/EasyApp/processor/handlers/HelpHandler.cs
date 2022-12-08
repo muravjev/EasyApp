@@ -9,7 +9,7 @@
             ValueFetcher = valueFetcher;
         }
 
-        public int Handle(EasyAppParserResult<TOptions> result, IEasyAppConsole console)
+        public int Handle(EasyAppResult<TOptions> result, IEasyAppConsole console)
         {
             if (ValueFetcher.Fetch<VersionAttribute>(result.Options))
             {

@@ -11,7 +11,7 @@ namespace EasyApp
     {
         public IEasyAppParser<TOptions> Build()
         {
-            var members = EasyAppReflector.CollectMembers<TOptions>();
+            var members = Reflector.CollectMembers<TOptions>();
 
             var shortKeyMembers = members.GroupByKey(x => x.Attribute.ShortKey);
             var longKeyMembers = members.GroupByKey(x => x.Attribute.LongKey);

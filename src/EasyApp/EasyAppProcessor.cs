@@ -4,7 +4,7 @@ namespace EasyApp
 {
     public interface IEasyAppProcessor<TOptions>
     {
-        int Process(EasyAppParserResult<TOptions> result);
+        int Process(EasyAppResult<TOptions> result);
     }
 
     public sealed class EasyAppProcessor<TOptions> : IEasyAppProcessor<TOptions>
@@ -27,7 +27,7 @@ namespace EasyApp
             return Handlers.GetValueOrDefault(typeof(T)) ?? ctor();
         }
 
-        private IEasyAppHandler<TOptions> getHandler(EasyAppParserResult<TOptions> result)
+        private IEasyAppHandler<TOptions> getHandler(EasyAppResult<TOptions> result)
         {
             if (result.IsHelp)
             {
@@ -48,7 +48,7 @@ namespace EasyApp
             return handler;
         }
 
-        public int Process(EasyAppParserResult<TOptions> result)
+        public int Process(EasyAppResult<TOptions> result)
         {
             return getHandler(result).Handle(result, Console);
         }

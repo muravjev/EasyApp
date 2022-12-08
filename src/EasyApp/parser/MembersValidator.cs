@@ -20,7 +20,7 @@
             {
                 if (member.Attribute.IsRequired && member.GetValue(options) == null)
                 {
-                    throw new AppException($"Value for {member.Attribute.Type.ToString().ToLower()} '{member.Attribute.Name}' is required.");
+                    throw new EasyAppException($"Value for {member.Attribute.Type.ToString().ToLower()} '{member.Attribute.Name}' is required.");
                 }
             }
         }

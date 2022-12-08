@@ -21,7 +21,7 @@
         {
             if (state.ParameterIndex >= ParameterMembers.Length)
             {
-                throw new AppException($"Unexpected parameter '{arg}'");
+                throw new EasyAppException($"Unexpected parameter '{arg}'");
             }
 
             var parameter = ParameterMembers[state.ParameterIndex++];

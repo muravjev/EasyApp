@@ -18,7 +18,7 @@ namespace EasyApp.parser
             }
             catch (Exception e)
             {
-                throw new AppException($"Failed to conert '{value}' as {member.Type.Name}.", e);
+                throw new EasyAppException($"Failed to conert '{value}' as {member.Type.Name}.", e);
             }
         }
     }

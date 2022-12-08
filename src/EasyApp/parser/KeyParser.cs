@@ -35,7 +35,7 @@ namespace EasyApp.parser
             var member = MemberLocator.GetMember(key, name);
             if (member == null)
             {
-                throw new AppException($"Unknown Key '{arg}'.");
+                throw new EasyAppException($"Unknown Key '{arg}'.");
             }
 
             if (member.Attribute.Type == MemberType.Flag)
@@ -62,7 +62,7 @@ namespace EasyApp.parser
 
                     if (string.IsNullOrEmpty(value))
                     {
-                        throw new AppException($"Missing value for Option '{key}{name}'.");
+                        throw new EasyAppException($"Missing value for Option '{key}{name}'.");
                     }
                 }
 

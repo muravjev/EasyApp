@@ -18,7 +18,7 @@ namespace EasyApp
 
         public IEasyAppProcessor<TOptions> Build(EasyAppHandlers<TOptions> handlers, TOptions options)
         {
-            var members = EasyAppReflector.CollectMembers<TOptions>();
+            var members = Reflector.CollectMembers<TOptions>();
             var valueFetcher = new ValueFetcher<TOptions>(members);
 
             var logLevel = valueFetcher.Fetch<LogLevelAttribute, LogLevel>(options, LogLevel.Normal);
