@@ -1,10 +1,10 @@
 ﻿using System.Diagnostics;
 
-namespace EasyApp.parser
+namespace EasyApp.parser.components
 {
     public interface IKeyParser<TOptions>
     {
-        bool Parse(EasyAppParserState<TOptions> state, string arg);
+        bool Parse(ParserState<TOptions> state, string arg);
     }
 
     public sealed class KeyParser<TOptions> : IKeyParser<TOptions>
@@ -22,7 +22,7 @@ namespace EasyApp.parser
             ValueConverter = converter;
         }
 
-        public bool Parse(EasyAppParserState<TOptions> state, string arg)
+        public bool Parse(ParserState<TOptions> state, string arg)
         {
             var keyArg = ArgParser.Parse(arg);
             if (keyArg == null)

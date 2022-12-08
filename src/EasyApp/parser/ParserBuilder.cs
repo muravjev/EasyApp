@@ -1,15 +1,15 @@
-﻿using EasyApp.parser;
+﻿using EasyApp.parser.components;
 
-namespace EasyApp
+namespace EasyApp.parser
 {
-    public interface IEasyAppParserBuilder<TOptions>
+    public interface IParserBuilder<TOptions>
     {
-        IEasyAppParser<TOptions> Build();
+        IParser<TOptions> Build();
     }
 
-    public sealed class EasyAppParserBuilder<TOptions> : IEasyAppParserBuilder<TOptions>
+    public sealed class ParserBuilder<TOptions> : IParserBuilder<TOptions>
     {
-        public IEasyAppParser<TOptions> Build()
+        public IParser<TOptions> Build()
         {
             var members = Reflector.CollectMembers<TOptions>();
 
@@ -19,7 +19,7 @@ namespace EasyApp
 
             var valueConverter = new ValueConverter();
 
-            return new EasyAppParser<TOptions>(
+            return new Parser<TOptions>(
                 new KeyParser<TOptions>(
                     new KeyArgParser(),
                     new KeyMemberLocator(shortKeyMembers, longKeyMembers),

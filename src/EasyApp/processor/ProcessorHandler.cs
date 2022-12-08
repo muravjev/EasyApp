@@ -1,17 +1,17 @@
-﻿namespace EasyApp
+﻿namespace EasyApp.processor
 {
-    public interface IEasyAppHandler<TOptions>
+    public interface IProcessorHandler<TOptions>
     {
         int Handle(EasyAppResult<TOptions> result, IEasyAppConsole console);
     }
 
-    public sealed class EasyAppHandlers<TOptions> : Dictionary<Type, IEasyAppHandler<TOptions>> { }
+    public sealed class ProcessorHandlers<TOptions> : Dictionary<Type, IProcessorHandler<TOptions>> { }
 
-    public sealed class EasyAppHandler<TOptions> : IEasyAppHandler<TOptions>
+    public sealed class ProcessorHandler<TOptions> : IProcessorHandler<TOptions>
     {
         public readonly Func<EasyAppResult<TOptions>, IEasyAppConsole, int> Func;
 
-        public EasyAppHandler(Func<EasyAppResult<TOptions>, IEasyAppConsole, int> func)
+        public ProcessorHandler(Func<EasyAppResult<TOptions>, IEasyAppConsole, int> func)
         {
             Func = func;
         }

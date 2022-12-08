@@ -1,8 +1,8 @@
-﻿namespace EasyApp.parser
+﻿namespace EasyApp.parser.components
 {
     public interface IParameterParser<TOptions>
     {
-        void Parse(EasyAppParserState<TOptions> state, string arg);
+        void Parse(ParserState<TOptions> state, string arg);
     }
 
     public sealed class ParameterParser<TOptions> : IParameterParser<TOptions>
@@ -17,7 +17,7 @@
             ParameterMembers = parameterMembers;
         }
 
-        public void Parse(EasyAppParserState<TOptions> state, string arg)
+        public void Parse(ParserState<TOptions> state, string arg)
         {
             if (state.ParameterIndex >= ParameterMembers.Length)
             {

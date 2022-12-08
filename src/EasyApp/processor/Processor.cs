@@ -1,33 +1,33 @@
-﻿using EasyApp.processor;
+﻿using EasyApp.processor.components;
 
-namespace EasyApp
+namespace EasyApp.processor
 {
-    public interface IEasyAppProcessor<TOptions>
+    public interface IProcessor<TOptions>
     {
         int Process(EasyAppResult<TOptions> result);
     }
 
-    public sealed class EasyAppProcessor<TOptions> : IEasyAppProcessor<TOptions>
+    public sealed class Processor<TOptions> : IProcessor<TOptions>
     {
-        private readonly EasyAppHandlers<TOptions> Handlers;
+        private readonly ProcessorHandlers<TOptions> Handlers;
 
         private readonly IEasyAppConsole Console;
 
         private readonly IValueFetcher<TOptions> ValueFetcher;
 
-        public EasyAppProcessor(IEasyAppConsole console, EasyAppHandlers<TOptions> handlers, IValueFetcher<TOptions> valueFetcher)
+        public Processor(IEasyAppConsole console, ProcessorHandlers<TOptions> handlers, IValueFetcher<TOptions> valueFetcher)
         {
             Console = console;
             Handlers = handlers;
             ValueFetcher = valueFetcher;
         }
 
-        private IEasyAppHandler<TOptions> getOrCreate<T>(Func<IEasyAppHandler<TOptions>> ctor)
+        private IProcessorHandler<TOptions> getOrCreate<T>(Func<IProcessorHandler<TOptions>> ctor)
         {
             return Handlers.GetValueOrDefault(typeof(T)) ?? ctor();
         }
 
-        private IEasyAppHandler<TOptions> getHandler(EasyAppResult<TOptions> result)
+        private IProcessorHandler<TOptions> getHandler(EasyAppResult<TOptions> result)
         {
             if (result.IsHelp)
             {

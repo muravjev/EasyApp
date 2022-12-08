@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
 
-namespace EasyApp
+namespace EasyApp.processor.components
 {
     public interface IAppInfoProvider
     {

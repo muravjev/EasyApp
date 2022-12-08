@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Text.RegularExpressions;
 
-namespace EasyApp.parser
+namespace EasyApp.parser.components
 {
     public record Arg(string key, string name, string value);
 

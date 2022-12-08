@@ -1,4 +1,4 @@
-﻿namespace EasyApp.parser
+﻿namespace EasyApp.parser.components
 {
     public interface IMembersValidator<TOptions>
     {

@@ -1,13 +1,13 @@
-﻿using EasyApp.parser;
+﻿using EasyApp.parser.components;
 
-namespace EasyApp
+namespace EasyApp.parser
 {
-    public interface IEasyAppParser<TOptions>
+    public interface IParser<TOptions>
     {
         EasyAppResult<TOptions> Parse(string[] args);
     }
 
-    public sealed class EasyAppParserState<TOptions>
+    public sealed class ParserState<TOptions>
     {
         public readonly TOptions Result;
 
@@ -19,7 +19,7 @@ namespace EasyApp
 
         public bool IsHelp;
 
-        internal EasyAppParserState(string[] args)
+        internal ParserState(string[] args)
         {
             Result = Activator.CreateInstance<TOptions>();
             Args = new Stack<string>(args);
@@ -27,7 +27,7 @@ namespace EasyApp
         }
     }
 
-    public sealed class EasyAppParser<TOptions> : IEasyAppParser<TOptions>
+    public sealed class Parser<TOptions> : IParser<TOptions>
     {
         private readonly IKeyParser<TOptions> KeyParser;
 
@@ -35,14 +35,14 @@ namespace EasyApp
 
         private readonly IMembersValidator<TOptions> MembersValidator;
 
-        public EasyAppParser(IKeyParser<TOptions> keyParser, IParameterParser<TOptions> parameterParser, IMembersValidator<TOptions> membersValidator)
+        public Parser(IKeyParser<TOptions> keyParser, IParameterParser<TOptions> parameterParser, IMembersValidator<TOptions> membersValidator)
         {
             KeyParser = keyParser;
             ParameterParser = parameterParser;
             MembersValidator = membersValidator;
         }
 
-        private void parse(EasyAppParserState<TOptions> state)
+        private void parse(ParserState<TOptions> state)
         {
             while (state.Args.Count > 0 && state.IsHelp == false)
             {
@@ -74,7 +74,7 @@ namespace EasyApp
         public EasyAppResult<TOptions> Parse(string[] args)
         {
             var nonEmptyArgs = args.Where(x => !string.IsNullOrEmpty(x)).Reverse().ToArray();
-            var state = new EasyAppParserState<TOptions>(nonEmptyArgs);
+            var state = new ParserState<TOptions>(nonEmptyArgs);
 
             try
             {

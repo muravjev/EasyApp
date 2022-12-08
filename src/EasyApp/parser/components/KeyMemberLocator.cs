@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 
-namespace EasyApp.parser
+namespace EasyApp.parser.components
 {
     public interface IKeyMemberLocator
     {

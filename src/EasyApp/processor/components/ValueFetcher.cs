@@ -1,4 +1,4 @@
-﻿namespace EasyApp.processor
+﻿namespace EasyApp.processor.components
 {
     public interface IValueFetcher<TOptions>
     {
