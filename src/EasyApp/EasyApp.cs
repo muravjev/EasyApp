@@ -22,9 +22,9 @@ namespace EasyApp
 
         public EasyApp() : this(new EasyAppSettings()) { }
 
-        public EasyApp<TOptions> AddExceptionHandler(Func<Exception, int> handler)
+        public EasyApp<TOptions> AddErrorHandler(Func<Exception, int> handler)
         {
-            Handlers.Add(typeof(ExceptionHandler<TOptions>), new ProcessorHandler<TOptions>((result, console) => handler(result.Exception!)));
+            Handlers.Add(typeof(ErrorHandler<TOptions>), new ProcessorHandler<TOptions>((result, console) => handler(result.Error!)));
             return this;
         }
 

@@ -9,10 +9,10 @@
         public readonly bool IsHelp = false;
 
         // Whether there were an exception during parsing.
-        public readonly Exception? Exception = null;
+        public readonly Exception? Error = null;
 
         // Whether parsing is succeesfull.
-        public bool IsParsed => Exception == null;
+        public bool IsParsed => Error == null;
 
         public EasyAppResult(TOptions options, bool isHelp)
         {
@@ -20,10 +20,10 @@
             IsHelp = isHelp;
         }
 
-        public EasyAppResult(TOptions options, Exception exception)
+        public EasyAppResult(TOptions options, Exception error)
         {
             Options = options;
-            Exception = exception;
+            Error = error;
         }
     }
 }

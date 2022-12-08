@@ -27,7 +27,6 @@ namespace EasyApp.parser
                 new ParameterParser<TOptions>(valueConverter, parameterMembers),
                 new MembersValidator<TOptions>(members)
             );
-
         }
     }
 }

@@ -21,7 +21,7 @@
             return new EasyApp<Options>()
                 .AddProcessHandler(process)
                 .AddCommandHandler<Command>(process)
-                .AddExceptionHandler(e => -1)
+                .AddErrorHandler(e => -1)
                 .Run(args);
         }
     }

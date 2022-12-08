@@ -2,10 +2,13 @@
 {
     internal sealed class HelpHandler<TOptions> : IProcessorHandler<TOptions>
     {
+        private readonly EasyAppSettings Settings;
+
         private readonly Member[] Members;
 
-        public HelpHandler(Member[] members)
+        public HelpHandler(EasyAppSettings settings, Member[] members)
         {
+            Settings = settings;
             Members = members;
         }
 

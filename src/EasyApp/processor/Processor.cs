@@ -7,14 +7,17 @@
 
     internal sealed class Processor<TOptions> : IProcessor<TOptions>
     {
+        private readonly EasyAppSettings Settings;
+
         private readonly ProcessorHandlers<TOptions> Handlers;
 
         private readonly IEasyAppConsole Console;
 
         private readonly Member[] Members;
 
-        public Processor(IEasyAppConsole console, ProcessorHandlers<TOptions> handlers, Member[] members)
+        public Processor(EasyAppSettings settings, IEasyAppConsole console, ProcessorHandlers<TOptions> handlers, Member[] members)
         {
+            Settings = settings;
             Console = console;
             Handlers = handlers;
             Members = members;
@@ -29,12 +32,12 @@
         {
             if (result.IsHelp)
             {
-                return getOrCreate<HelpHandler<TOptions>>(() => new HelpHandler<TOptions>(Members));
+                return getOrCreate<HelpHandler<TOptions>>(() => new HelpHandler<TOptions>(Settings, Members));
             }
 
-            if (result.Exception != null)
+            if (result.Error != null)
             {
-                return getOrCreate<ExceptionHandler<TOptions>>(() => new ExceptionHandler<TOptions>());
+                return getOrCreate<ErrorHandler<TOptions>>(() => new ErrorHandler<TOptions>(Settings));
             }
 
             var handler = Handlers.GetValueOrDefault(typeof(TOptions));

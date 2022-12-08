@@ -23,7 +23,7 @@ namespace EasyApp.processor
             var logLevel = members.GetValue<LogLevelAttribute, LogLevel>(options, LogLevel.Normal);
             var console = new EasyAppConsole(logLevel, new AppInfoProvider(), Settings.Output.Encoding);
 
-            return new Processor<TOptions>(console, handlers, members);
+            return new Processor<TOptions>(Settings, console, handlers, members);
         }
     }
 }
