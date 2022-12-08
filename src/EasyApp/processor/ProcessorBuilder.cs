@@ -2,28 +2,14 @@
 
 namespace EasyApp.processor
 {
-    internal interface IProcessorBuilder<TOptions>
+    internal static class ProcessorBuilder
     {
-        IProcessor<TOptions> Build(ProcessorHandlers<TOptions> handlers, TOptions options);
-    }
-
-    internal sealed class ProcessorBuilder<TOptions> : IProcessorBuilder<TOptions>
-    {
-        private readonly EasyAppSettings Settings;
-
-        public ProcessorBuilder(EasyAppSettings settings)
+        public static IProcessor<TOptions> Build<TOptions>(EasyApp<TOptions> settings, Member[] members, TOptions options)
         {
-            Settings = settings;
-        }
-
-        public IProcessor<TOptions> Build(ProcessorHandlers<TOptions> handlers, TOptions options)
-        {
-            var members = Reflector.CollectMembers<TOptions>();
-
             var logLevel = members.GetValue<LogLevelAttribute, LogLevel>(options, LogLevel.Normal);
-            var console = new EasyAppConsole(logLevel, new AppInfoProvider(), Settings.Output.Encoding);
+            var console = new EasyAppConsole(logLevel, new AppInfoProvider(), settings.OutputEncoding);
 
-            return new Processor<TOptions>(Settings, console, handlers, members);
+            return new Processor<TOptions>(settings, console, members);
         }
     }
 }

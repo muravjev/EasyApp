@@ -6,7 +6,14 @@ namespace EasyApp
     {
         public static EasyAppResult<T> Parse<T>(params string[] args) where T : new()
         {
-            return new ParserBuilder<T>().Build().Parse(args);
+            var members = Reflector
+                .CollectMembers<T>();
+
+            var result = ParserBuilder
+                .Build<T>(new EasyApp<T>(), members)
+                .Parse(args);
+
+            return result;
         }
     }
 }

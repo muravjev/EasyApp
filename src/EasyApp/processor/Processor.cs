@@ -7,25 +7,22 @@
 
     internal sealed class Processor<TOptions> : IProcessor<TOptions>
     {
-        private readonly EasyAppSettings Settings;
-
-        private readonly ProcessorHandlers<TOptions> Handlers;
+        private readonly EasyApp<TOptions> Settings;
 
         private readonly IEasyAppConsole Console;
 
         private readonly Member[] Members;
 
-        public Processor(EasyAppSettings settings, IEasyAppConsole console, ProcessorHandlers<TOptions> handlers, Member[] members)
+        public Processor(EasyApp<TOptions> settings, IEasyAppConsole console, Member[] members)
         {
             Settings = settings;
             Console = console;
-            Handlers = handlers;
             Members = members;
         }
 
         private IProcessorHandler<TOptions> getOrCreate<T>(Func<IProcessorHandler<TOptions>> ctor)
         {
-            return Handlers.GetValueOrDefault(typeof(T)) ?? ctor();
+            return Settings.Handlers.GetValueOrDefault(typeof(T)) ?? ctor();
         }
 
         private IProcessorHandler<TOptions> getHandler(EasyAppResult<TOptions> result)
@@ -40,7 +37,7 @@
                 return getOrCreate<ErrorHandler<TOptions>>(() => new ErrorHandler<TOptions>(Settings));
             }
 
-            var handler = Handlers.GetValueOrDefault(typeof(TOptions));
+            var handler = Settings.Handlers.GetValueOrDefault(typeof(TOptions));
             if (handler == null)
             {
                 throw new Exception("Process handler is not defined");

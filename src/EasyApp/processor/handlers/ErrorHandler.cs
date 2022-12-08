@@ -4,9 +4,9 @@ namespace EasyApp.processor
 {
     internal sealed class ErrorHandler<TOptions> : IProcessorHandler<TOptions>
     {
-        private readonly EasyAppSettings Settings;
+        private readonly EasyApp<TOptions> Settings;
 
-        public ErrorHandler(EasyAppSettings settings)
+        public ErrorHandler(EasyApp<TOptions> settings)
         {
             Settings = settings;
         }

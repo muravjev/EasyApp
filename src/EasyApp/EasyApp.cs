@@ -1,26 +1,19 @@
 ﻿using EasyApp.parser;
 using EasyApp.processor;
+using System.Text;
 
 namespace EasyApp
 {
     public sealed class EasyApp<TOptions>
     {
-        private readonly EasyAppSettings Settings = new EasyAppSettings();
+        public int UnhandledExceptionExitCode = -1;
+        public int ParseErrorExitCode = -2;
 
-        private readonly ProcessorHandlers<TOptions> Handlers = new ProcessorHandlers<TOptions>();
+        public Encoding OutputEncoding = Encoding.Unicode;
 
-        private readonly IParserBuilder<TOptions> ParserBuilder;
+        #region Handlers
 
-        private readonly IProcessorBuilder<TOptions> ProcessorBuilder;
-
-        public EasyApp(EasyAppSettings settings)
-        {
-            Settings = settings;
-            ParserBuilder = new ParserBuilder<TOptions>();
-            ProcessorBuilder = new ProcessorBuilder<TOptions>(settings);
-        }
-
-        public EasyApp() : this(new EasyAppSettings()) { }
+        internal readonly ProcessorHandlers<TOptions> Handlers = new ProcessorHandlers<TOptions>();
 
         public EasyApp<TOptions> AddErrorHandler(Func<Exception, int> handler)
         {
@@ -46,10 +39,28 @@ namespace EasyApp
             return this;
         }
 
+        #endregion
+
         public int Run(string[] args)
         {
-            var parserResult = ParserBuilder.Build().Parse(args);
-            return ProcessorBuilder.Build(Handlers, parserResult.Options).Process(parserResult);
+            try
+            {
+                var members = Reflector
+                    .CollectMembers<TOptions>();
+
+                var result = ParserBuilder
+                    .Build<TOptions>(this, members)
+                    .Parse(args);
+
+                return ProcessorBuilder
+                    .Build<TOptions>(this, members, result.Options)
+                    .Process(result);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Unhandled exception: {e}");
+                return UnhandledExceptionExitCode;
+            }
         }
     }
 }

@@ -2,17 +2,10 @@
 
 namespace EasyApp.parser
 {
-    internal interface IParserBuilder<TOptions>
+    internal static class ParserBuilder
     {
-        IParser<TOptions> Build();
-    }
-
-    internal sealed class ParserBuilder<TOptions> : IParserBuilder<TOptions>
-    {
-        public IParser<TOptions> Build()
+        public static IParser<TOptions> Build<TOptions>(EasyApp<TOptions> settings, Member[] members)
         {
-            var members = Reflector.CollectMembers<TOptions>();
-
             var shortKeyMembers = members.GroupByKey(x => x.Attribute.ShortKey);
             var longKeyMembers = members.GroupByKey(x => x.Attribute.LongKey);
             var parameterMembers = members.Filter(MemberType.Parameter);
