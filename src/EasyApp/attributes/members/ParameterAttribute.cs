@@ -2,11 +2,11 @@
 {
     public class ParameterAttribute : MemberAttribute
     {
-        private static readonly OutputAttribute defaultOutput = new OutputAttribute("Parameters");
+        private static readonly SectionAttribute defaultSection = new ParametersSectionAttribute();
 
         public override MemberType Type => MemberType.Parameter;
 
-        public override OutputAttribute DefaultOutput => defaultOutput;
+        public override SectionAttribute DefaultSection => defaultSection;
 
         public ParameterAttribute(string name, string description, bool isRequired = true)
             : base(name, null, null, description, isRequired) { }

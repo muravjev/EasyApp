@@ -2,11 +2,11 @@
 {
     public class OptionAttribute : MemberAttribute
     {
-        private static readonly OutputAttribute defaultOutput = new OutputAttribute("Options");
+        private static readonly SectionAttribute defaultSection = new OptionsSectionAttribute();
 
         public override MemberType Type => MemberType.Option;
 
-        public override OutputAttribute DefaultOutput => defaultOutput;
+        public override SectionAttribute DefaultSection => defaultSection;
 
         public OptionAttribute(char shortKey, string longKey, string description, string? name = null, bool isRequired = true)
             : base(name, shortKey.ToString(), longKey, description, isRequired) { }

@@ -2,11 +2,11 @@
 {
     public class FlagAttribute : MemberAttribute
     {
-        private static readonly OutputAttribute defaultOutput = new OutputAttribute("Options");
+        private static readonly SectionAttribute defaultSection = new OptionsSectionAttribute();
 
         public override MemberType Type => MemberType.Flag;
 
-        public override OutputAttribute DefaultOutput => defaultOutput;
+        public override SectionAttribute DefaultSection => defaultSection;
 
         public FlagAttribute(char shortKey, string longKey, string description, bool isHelp = false)
             : base(null, shortKey == default ? null : shortKey.ToString(), longKey, description, false, isHelp) { }

@@ -4,7 +4,8 @@
     {
         Flag,
         Option,
-        Parameter
+        Parameter,
+        Command
     }
 
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false)]
@@ -30,7 +31,8 @@
 
         public abstract MemberType Type { get; }
 
-        public abstract OutputAttribute DefaultOutput { get; }
+        // Section where this member shall be displayed.
+        public abstract SectionAttribute DefaultSection { get; }
 
         protected MemberAttribute(string? name, string? shortKey, string? longKey, string description, bool isRequired, bool isHelp = false)
         {

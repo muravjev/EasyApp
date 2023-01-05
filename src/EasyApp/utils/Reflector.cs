@@ -6,7 +6,9 @@ namespace EasyApp
     {
         public readonly MemberAttribute Attribute;
 
-        public readonly OutputAttribute Output;
+        public readonly SectionAttribute Section;
+
+        public readonly bool IsHidden;
 
         public readonly int MetadataToken;
 
@@ -18,10 +20,11 @@ namespace EasyApp
 
         public abstract void SetValue(object? instance, object? value);
 
-        protected Member(MemberAttribute attribute, OutputAttribute? output, MemberInfo info, Type type)
+        protected Member(MemberAttribute attribute, SectionAttribute? section, IsHiddenAttribute? isHidden, MemberInfo info, Type type)
         {
             Attribute = attribute;
-            Output = output ?? attribute.DefaultOutput;
+            Section = section ?? attribute.DefaultSection;
+            IsHidden = isHidden == null;
             MetadataToken = info.MetadataToken;
             Name = info.Name;
             Type = type;
@@ -32,8 +35,8 @@ namespace EasyApp
     {
         private readonly FieldInfo FieldInfo;
 
-        public FieldMember(MemberAttribute attribute, OutputAttribute? output, FieldInfo fieldInfo)
-            : base(attribute, output, fieldInfo, fieldInfo.FieldType)
+        public FieldMember(MemberAttribute attribute, SectionAttribute? section, IsHiddenAttribute? isHidden, FieldInfo fieldInfo)
+            : base(attribute, section, isHidden, fieldInfo, fieldInfo.FieldType)
         {
             FieldInfo = fieldInfo;
         }
@@ -53,8 +56,8 @@ namespace EasyApp
     {
         private readonly PropertyInfo PropertyInfo;
 
-        public PropertyMember(MemberAttribute attribute, OutputAttribute? output, PropertyInfo propertyInfo)
-            : base(attribute, output, propertyInfo, propertyInfo.PropertyType)
+        public PropertyMember(MemberAttribute attribute, SectionAttribute? section, IsHiddenAttribute? isHidden, PropertyInfo propertyInfo)
+            : base(attribute, section, isHidden, propertyInfo, propertyInfo.PropertyType)
         {
             PropertyInfo = propertyInfo;
         }
@@ -81,8 +84,9 @@ namespace EasyApp
                 var attr = field.GetCustomAttribute<TAttribute>();
                 if (attr != null)
                 {
-                    var output = field.GetCustomAttribute<OutputAttribute>();
-                    members.Add(new FieldMember(attr, output, field));
+                    var section = field.GetCustomAttribute<SectionAttribute>();
+                    var isHidden = field.GetCustomAttribute<IsHiddenAttribute>();
+                    members.Add(new FieldMember(attr, section, isHidden, field));
                 }
             }
 
@@ -91,8 +95,9 @@ namespace EasyApp
                 var attr = property.GetCustomAttribute<TAttribute>();
                 if (attr != null)
                 {
-                    var output = property.GetCustomAttribute<OutputAttribute>();
-                    members.Add(new PropertyMember(attr, output, property));
+                    var section = property.GetCustomAttribute<SectionAttribute>();
+                    var isHidden = property.GetCustomAttribute<IsHiddenAttribute>();
+                    members.Add(new PropertyMember(attr, section, isHidden, property));
                 }
             }
 
