@@ -20,12 +20,12 @@ namespace EasyApp
         [Test]
         public void ParsedNoArgs()
         {
-            var result = new AppArgs().Parse<Options>();
+            var result = Utilities.Parse<Options>();
 
             Assert.Multiple(() =>
             {
                 Assert.That(result.IsParsed, Is.EqualTo(true));
-                Assert.That(result.IsBreaked, Is.EqualTo(true));
+                Assert.That(result.IsHelp, Is.EqualTo(true));
                 Assert.That(result.Options.F1, Is.EqualTo(false));
                 Assert.That(result.Options.F2, Is.EqualTo(false));
                 Assert.That(result.Options.O1, Is.EqualTo(null));
@@ -36,12 +36,12 @@ namespace EasyApp
         [Test]
         public void ParsedBreaked()
         {
-            var result = new AppArgs().Parse<Options>("--f1");
+            var result = Utilities.Parse<Options>("--f1");
 
             Assert.Multiple(() =>
             {
                 Assert.That(result.IsParsed, Is.EqualTo(true));
-                Assert.That(result.IsBreaked, Is.EqualTo(true));
+                Assert.That(result.IsHelp, Is.EqualTo(true));
                 Assert.That(result.Options.F1, Is.EqualTo(true));
                 Assert.That(result.Options.F2, Is.EqualTo(false));
                 Assert.That(result.Options.O1, Is.EqualTo(null));
@@ -52,12 +52,12 @@ namespace EasyApp
         [Test]
         public void ParsedRequired()
         {
-            var result = new AppArgs().Parse<Options>("--o1", "ovalue", "pvalue");
+            var result = Utilities.Parse<Options>("--o1", "ovalue", "pvalue");
 
             Assert.Multiple(() =>
             {
                 Assert.That(result.IsParsed, Is.EqualTo(true));
-                Assert.That(result.IsBreaked, Is.EqualTo(false));
+                Assert.That(result.IsHelp, Is.EqualTo(false));
                 Assert.That(result.Options.F1, Is.EqualTo(false));
                 Assert.That(result.Options.F2, Is.EqualTo(false));
                 Assert.That(result.Options.O1, Is.EqualTo("ovalue"));
@@ -70,13 +70,13 @@ namespace EasyApp
         [TestCase(false, false, false, "ovalue", null, "--o1", "ovalue")]
         public void FailedWithMissedRequiredFields(bool breaker, bool f1, bool f2, string? o1, string? p1, params string[] args)
         {
-            var result = new AppArgs().Parse<Options>(args);
+            var result = Utilities.Parse<Options>(args);
 
             Assert.Multiple(() =>
             {
                 Assert.That(result.IsParsed, Is.EqualTo(false));
-                Assert.That(result.Exception, Is.TypeOf<AppException>());
-                Assert.That(result.IsBreaked, Is.EqualTo(breaker));
+                Assert.That(result.Error, Is.TypeOf<EasyAppException>());
+                Assert.That(result.IsHelp, Is.EqualTo(breaker));
                 Assert.That(result.Options.F1, Is.EqualTo(f1));
                 Assert.That(result.Options.F2, Is.EqualTo(f2));
                 Assert.That(result.Options.O1, Is.EqualTo(o1));

@@ -8,9 +8,9 @@ namespace EasyApp
             public T? P1 = default;
         }
 
-        private static Result<Options<T>> parse<T>(string arg)
+        private static EasyAppResult<Options<T>> parse<T>(string arg)
         {
-            return new AppArgs().Parse<Options<T>>("--", arg);
+            return Utilities.Parse<Options<T>>("--", arg);
         }
 
         [Test]
@@ -75,7 +75,7 @@ namespace EasyApp
             {
                 Assert.That(result.IsParsed, Is.EqualTo(false));
                 Assert.That(result.Options.P1, Is.EqualTo(default(Foo)));
-                Assert.That(result.Exception, Is.TypeOf<AppException>());
+                Assert.That(result.Error, Is.TypeOf<EasyAppException>());
             });
         }
 
@@ -167,7 +167,7 @@ namespace EasyApp
             {
                 Assert.That(result.IsParsed, Is.EqualTo(false));
                 Assert.That(result.Options.P1, Is.EqualTo(default(byte)));
-                Assert.That(result.Exception, Is.TypeOf<AppException>());
+                Assert.That(result.Error, Is.TypeOf<EasyAppException>());
             });
         }
 
@@ -198,7 +198,7 @@ namespace EasyApp
             {
                 Assert.That(result.IsParsed, Is.EqualTo(false));
                 Assert.That(result.Options.P1, Is.EqualTo(default(int)));
-                Assert.That(result.Exception, Is.TypeOf<AppException>());
+                Assert.That(result.Error, Is.TypeOf<EasyAppException>());
             });
         }
     }

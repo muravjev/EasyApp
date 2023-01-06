@@ -1,8 +1,8 @@
 ﻿using System.Reflection;
 
-namespace EasyApp
+namespace EasyApp.processor.components
 {
-    public interface IAppInfo
+    internal interface IAppInfoProvider
     {
         string Product { get; }
         string Version { get; }
@@ -12,7 +12,7 @@ namespace EasyApp
         bool IsRelease { get; }
     }
 
-    public sealed class AppInfo : IAppInfo
+    internal sealed class AppInfoProvider : IAppInfoProvider
     {
         private readonly string Product;
         private readonly string Version;
@@ -21,17 +21,17 @@ namespace EasyApp
         private readonly string Copyright;
         private readonly bool IsRelease;
 
-        string IAppInfo.Product => Product;
+        string IAppInfoProvider.Product => Product;
 
-        string IAppInfo.Version => Version;
+        string IAppInfoProvider.Version => Version;
 
-        string IAppInfo.Title => Title;
+        string IAppInfoProvider.Title => Title;
 
-        string IAppInfo.Description => Description;
+        string IAppInfoProvider.Description => Description;
 
-        string IAppInfo.Copyright => Copyright;
+        string IAppInfoProvider.Copyright => Copyright;
 
-        bool IAppInfo.IsRelease => IsRelease;
+        bool IAppInfoProvider.IsRelease => IsRelease;
 
         #region Extensions
 
@@ -47,7 +47,7 @@ namespace EasyApp
 
         #endregion
 
-        public AppInfo()
+        public AppInfoProvider()
         {
             var assembly = Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly();
 

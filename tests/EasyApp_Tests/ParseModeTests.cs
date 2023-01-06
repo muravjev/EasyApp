@@ -14,7 +14,7 @@ namespace EasyApp
         [Test]
         public void EmptyArgsParsed()
         {
-            var result = new AppArgs().Parse<Options>(new string[] { });
+            var result = Utilities.Parse<Options>();
 
             Assert.Multiple(() =>
             {
@@ -32,7 +32,7 @@ namespace EasyApp
         [TestCase("/help")]
         public void FlagParsed(string flag)
         {
-            var result = new AppArgs().Parse<Options>(new string[] { flag });
+            var result = Utilities.Parse<Options>(flag);
 
             Assert.Multiple(() =>
             {
@@ -56,7 +56,7 @@ namespace EasyApp
         [TestCase("/format:foo")]
         public void OptionParsed(string option)
         {
-            var result = new AppArgs().Parse<Options>(option.Split(' '));
+            var result = Utilities.Parse<Options>(option.Split(' '));
 
             Assert.Multiple(() =>
             {
