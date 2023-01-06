@@ -48,6 +48,9 @@
                 throw new Exception("Process handler is not defined");
             }
 
+            Console.Header();
+            Console.Parameters(result.Options);
+
             return handler;
         }
 

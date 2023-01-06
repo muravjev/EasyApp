@@ -177,16 +177,8 @@ namespace EasyApp
             }
         }
 
-        public void Usage<T>(T options)
+        private void writeInlineUsage(Verbosity verbosity, Group[] groups)
         {
-            WriteLine(Verbosity.Normal);
-            Write(Verbosity.Normal, "Usage: ");
-            Write(Verbosity.Normal, Info.Product);
-
-            var showHidden = Members.GetValue<AllAttribute>(options);
-            var groups = Members.ToGroups(showHidden);
-            var groupsData = groups.ToGroupsData(Settings);
-
             foreach (var group in groups)
             {
                 if (group.Attribute.Expandable &&
@@ -203,7 +195,19 @@ namespace EasyApp
                     Write(Verbosity.Normal, $" [{group.Attribute.Name.ToLower()}...]");
                 }
             }
+        }
 
+        public void Usage<T>(T options)
+        {
+            WriteLine(Verbosity.Normal);
+            Write(Verbosity.Normal, "Usage: ");
+            Write(Verbosity.Normal, Info.Product);
+
+            var showHidden = Members.GetValue<AllAttribute>(options);
+            var groups = Members.ToGroups(showHidden);
+            var groupsData = groups.ToGroupsData(Settings);
+
+            writeInlineUsage(Verbosity.Normal, groups);
             WriteLine(Verbosity.Normal);
             writeSections(Verbosity.Normal, groupsData);
         }
@@ -212,10 +216,7 @@ namespace EasyApp
         {
             WriteLine(Verbosity.Normal, "PARAMETERS");
 
-            // writeOptions<T>(LogLevel.Debug, (member) =>
-            // {
-            //     return getValue(member, options) ?? "<null>";
-            // });
+            // TODO: Outputs parameters with Debug verbosity.
         }
     }
 }
