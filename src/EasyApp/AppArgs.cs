@@ -1,276 +1,257 @@
-﻿using System.Reflection;
+﻿using System.ComponentModel;
+using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 namespace EasyApp
 {
-    [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
-    public abstract class KeyAttribute : Attribute
-    {
-        public readonly int Order;
-
-        public readonly string Name;
-
-        public readonly string? ShortKey;
-
-        public readonly string? LongKey;
-
-        public readonly string Description;
-
-        public readonly bool IsRequired;
-
-        protected KeyAttribute(int order, string name, string? shortKey, string? longKey, string description, bool isRequired)
-        {
-            Order = order;
-            Name = name;
-            ShortKey = shortKey;
-            LongKey = longKey;
-            Description = description;
-            IsRequired = isRequired;
-        }
-
-        protected KeyAttribute(int order, string name, string description, bool isRequired)
-            : this(order, name, null, null, description, isRequired) { }
-
-        protected KeyAttribute(int order, string shortKey, string longKey, string description, bool isRequired)
-            : this(order, longKey ?? shortKey, shortKey, longKey, description, isRequired) { }
-
-        protected KeyAttribute(int order, char shortKey, string longKey, string description, bool isRequired)
-            : this(order, shortKey.ToString(), longKey, description, isRequired) { }
-    }
-
-    public class FlagAttribute : KeyAttribute
-    {
-        public bool IsBreaker = true;
-
-        public FlagAttribute(int order, char shortKey, string longKey, string description)
-            : base(order, shortKey, longKey, description, false) { }
-
-        public FlagAttribute(char shortKey, string longKey, string description)
-            : base(1, shortKey, longKey, description, false) { }
-    }
-
-    public class OptionAttribute : KeyAttribute
-    {
-        public string? ValueName = null;
-
-        public OptionAttribute(int order, char shortKey, string longKey, string description, string? valueName = null, bool isRequired = true)
-            : base(order, shortKey, longKey, description, isRequired)
-        {
-            ValueName = valueName;
-        }
-
-        public OptionAttribute(char shortKey, string longKey, string description, string? valueName = null, bool isRequired = true)
-            : this(1, shortKey, longKey, description, valueName, isRequired) { }
-    }
-
-    public class ValueAttribute : KeyAttribute
-    {
-        public ValueAttribute(int order, string name, string description, bool isRequired = true)
-            : base(order, name, description, isRequired) { }
-
-        public ValueAttribute(string name, string description, bool isRequired = true)
-            : this(1, name, description, isRequired) { }
-    }
-
     public sealed class Result<T>
     {
+        // Parse options.
         public readonly T Options;
 
-        public readonly Stack<string> Errors;
+        // Whether execution is breaked and help is required (no args or breakable flag like --version).
+        public readonly bool IsBreaked = false;
 
-        public readonly bool IsBreaked;
+        // Whether there were an exception during parsing.
+        public readonly Exception? Exception = null;
 
-        public bool IsParsed => Errors.Count == 0;
+        // Whether parsing is succeesfull.
+        public bool IsParsed => Exception == null;
 
-        public bool HasErrors => Errors.Count > 0;
-
-        public Result(T options, Stack<string> errors, bool isBreaked)
+        public Result(T options, bool isBreaked)
         {
             Options = options;
-            Errors = errors;
             IsBreaked = isBreaked;
         }
-    }
 
+        public Result(T options, Exception exception)
+        {
+            Options = options;
+            Exception = exception;
+        }
+    }
 
     public interface IAppArgs
     {
         Result<T> Parse<T>(string[] args) where T : new();
     }
 
-    internal record Field<TAttribute>(FieldInfo FieldInfo, TAttribute Attribute);
-
-    public sealed class AppArgs : IAppArgs
+    internal sealed class Parser<T> where T : new()
     {
-        internal static Field<TAttribute>[] CollectFields<TOptions, TAttribute>() where TAttribute : KeyAttribute
+        private readonly T Result;
+
+        private readonly Stack<string> Args;
+
+        private bool ParseKeys = true;
+
+        private bool IsBreaked = false;
+
+        private int ParameterIndex = 0;
+
+        private readonly Member[] Members;
+
+        private readonly Dictionary<string, Member> ShortKeyMembers;
+
+        private readonly Dictionary<string, Member> LongKeyMembers;
+
+        private readonly Member[] ParameterMembers;
+
+        internal Parser(string[] args, Member[] members, Dictionary<string, Member> shortKeyMembers, Dictionary<string, Member> longKeyMembers, Member[] parameters)
         {
-            return typeof(TOptions)
-                .GetFields()
-                .Where(field => Attribute.IsDefined(field, typeof(TAttribute)))
-                .Select(x => new Field<TAttribute>(x, x.GetCustomAttribute<TAttribute>()!))
-                .OrderBy(x => x.Attribute.Order).ThenBy(x => x.FieldInfo.MetadataToken)
-                .ToArray();
+            Result = new T();
+            Args = new Stack<string>(args);
+            IsBreaked = args.Length == 0;
+            Members = members;
+            ShortKeyMembers = shortKeyMembers;
+            LongKeyMembers = longKeyMembers;
+            ParameterMembers = parameters;
         }
 
-        private static Dictionary<string, Field<T>> toFieldsByKeyMap<T>(Field<T>[] fields) where T : KeyAttribute
+        private Member? getKeyMember(string key, string name)
         {
-            var byKey = new Dictionary<string, Field<T>>();
-
-            foreach (var field in fields)
+            if (key == "-")
             {
-                var attr = field.Attribute;
-
-                if (!string.IsNullOrEmpty(attr.ShortKey))
-                {
-                    byKey.Add($"-{attr.ShortKey}", field);
-                }
-
-                if (!string.IsNullOrEmpty(attr.LongKey))
-                {
-                    byKey.Add($"--{attr.LongKey}", field);
-                }
+                return ShortKeyMembers.GetValueOrDefault(name);
             }
 
-            return byKey;
+            if (key == "--")
+            {
+                return LongKeyMembers.GetValueOrDefault(name);
+            }
+
+            Debug.Assert(key == "/");
+
+            return LongKeyMembers.GetValueOrDefault(name) ?? ShortKeyMembers.GetValueOrDefault(name);
         }
 
-        private static bool setFieldValue<T>(T result, FieldInfo field, string value, Stack<string> errors)
+        private void setTypedValue(Member member, string value)
         {
-            if (field.FieldType == typeof(string))
+            try
             {
-                field.SetValue(result, value);
+                var converter = TypeDescriptor.GetConverter(member.Type);
+                var converted = converter.ConvertFromInvariantString(value);
+
+                member.SetValue(Result, converted);
+            }
+            catch (Exception e)
+            {
+                throw new AppException($"Failed to conert '{value}' as {member.Type.Name}.", e);
+            }
+        }
+
+        private bool parseKey(string arg)
+        {
+            if (!ParseKeys)
+            {
+                return false;
+            }
+
+            if (arg == "--")
+            {
+                ParseKeys = false;
                 return true;
             }
-            else if (field.FieldType == typeof(int))
+
+            var regex = new Regex(@"(--|-|\/)([^:=]+)[:=]?(.*)?", RegexOptions.Compiled);
+            var matches = regex.Matches(arg);
+            if (matches.Count == 0)
             {
-                if (int.TryParse(value, out int intValue))
+                if (arg.StartsWith("-") || arg.StartsWith("/"))
                 {
-                    field.SetValue(result, intValue);
-                    return true;
+                    throw new AppException($"Invalid Key '{arg}'.");
                 }
-                else
-                {
-                    errors.Push($"Failed to parse '{value}' as int.");
-                }
+
+                return false;
             }
-            else if (field.FieldType.IsEnum)
+
+            Debug.Assert(matches.Count == 1);
+
+            var values = matches[0].Groups.Values.Skip(1).Select(x => x.Value).ToArray();
+            Debug.Assert(values.Length == 3);
+
+            var key = values[0];
+            var name = values[1];
+            var value = values[2];
+
+            var member = getKeyMember(key, name);
+            if (member == null)
             {
-                var enumValue = Enum.Parse(field.FieldType, value, true);
-                field.SetValue(result, enumValue);
-                return true;
+                throw new AppException($"Unknown Key '{arg}'.");
+            }
+
+            if (member.Attribute.Type == MemberType.Flag)
+            {
+                Debug.Assert(string.IsNullOrEmpty(value));
+
+                if (member.Attribute.IsBreaker)
+                {
+                    IsBreaked = true;
+                }
+
+                member.SetValue(Result, true);
             }
             else
             {
-                errors.Push($"Unsupported type '{field.FieldType.Name}'.");
+                Debug.Assert(member.Attribute.Type == MemberType.Option);
+
+                if (string.IsNullOrEmpty(value))
+                {
+                    if (Args.Count > 0)
+                    {
+                        value = Args.Pop();
+                    }
+
+                    if (string.IsNullOrEmpty(value))
+                    {
+                        throw new AppException($"Missing value for Option '{key}{name}'.");
+                    }
+                }
+
+                setTypedValue(member, value);
             }
 
-            return false;
+            return true;
         }
 
-        private static void validateRequiredFields<T, TAttribute>(T result, Field<TAttribute>[] fields, Stack<string> errors) where TAttribute : KeyAttribute
+        private void parseParameter(string arg)
         {
-            foreach (var field in fields)
+            if (ParameterIndex >= ParameterMembers.Length)
             {
-                if (field.Attribute.IsRequired && field.FieldInfo.GetValue(result) == null)
+                throw new AppException($"Unexpected parameter '{arg}'");
+            }
+
+            var parameter = ParameterMembers[ParameterIndex++];
+
+            setTypedValue(parameter, arg);
+        }
+
+        private void validateThatRequiredMemberssAreFilled()
+        {
+            foreach (var member in Members)
+            {
+                if (member.Attribute.IsRequired && member.GetValue(Result) == null)
                 {
-                    errors.Push($"Value for '{field.Attribute.Name}' is missing.");
+                    throw new AppException($"Value for {member.Attribute.Type.ToString().ToLower()} '{member.Attribute.Name}' is required.");
                 }
             }
         }
 
-        Result<T> IAppArgs.Parse<T>(string[] args)
+        internal void parse()
         {
-            var result = new T();
-            var errors = new Stack<string>();
-
-            if (args.Length == 0)
+            while (Args.Count > 0 && IsBreaked == false)
             {
-                return new Result<T>(result, errors, true);
-            }
+                var arg = Args.Pop();
 
-            var flagsFields = CollectFields<T, FlagAttribute>();
-            var optionsFields = CollectFields<T, OptionAttribute>();
-            var valuesFields = CollectFields<T, ValueAttribute>();
-
-            var flagsByKey = toFieldsByKeyMap(flagsFields);
-            var optionsByKey = toFieldsByKeyMap(optionsFields);
-
-            var valueIndex = 0;
-            var skipKeys = false;
-
-            for (var i = 0; i < args.Length; ++i)
-            {
-                var arg = args[i];
-
-                if (skipKeys == false)
+                if (parseKey(arg))
                 {
-                    if (arg == "--")
-                    {
-                        skipKeys = true;
-                        continue;
-                    }
-
-                    var flag = flagsByKey.GetValueOrDefault(arg);
-                    if (flag != null)
-                    {
-                        flag.FieldInfo.SetValue(result, true);
-
-                        if (flag.Attribute.IsBreaker)
-                        {
-                            return new Result<T>(result, errors, true);
-                        }
-
-                        continue;
-                    }
-
-                    var option = optionsByKey.GetValueOrDefault(arg);
-                    if (option != null)
-                    {
-                        if (++i >= args.Length)
-                        {
-                            errors.Push($"Missing option '{option.Attribute.Name}' value '{arg}'");
-                            break;
-                        }
-
-                        var optionValue = args[i];
-
-                        if (!setFieldValue(result, option.FieldInfo, optionValue, errors))
-                        {
-                            break;
-                        }
-
-                        continue;
-                    }
-
-                    if (arg.StartsWith("-"))
-                    {
-                        errors.Push($"Unknown key '{arg}'.");
-                        break;
-                    }
+                    continue;
                 }
 
-                if (valueIndex >= valuesFields.Length)
-                {
-                    errors.Push($"Unexpected parameter '{arg}'");
-                    break;
-                }
-
-                var value = valuesFields[valueIndex];
-
-                if (!setFieldValue(result, value.FieldInfo, arg, errors))
-                {
-                    break;
-                }
-
-                valueIndex++;
+                parseParameter(arg);
             }
 
-            if (errors.Count == 0)
+            if (IsBreaked)
             {
-                validateRequiredFields(result, optionsFields, errors);
-                validateRequiredFields(result, valuesFields, errors);
+                return;
             }
 
-            return new Result<T>(result, errors, false);
+            validateThatRequiredMemberssAreFilled();
+        }
+
+        internal Result<T> Parse()
+        {
+            try
+            {
+                parse();
+            }
+            catch (AppException exception)
+            {
+                return new Result<T>(Result, exception);
+            }
+            catch (Exception exception)
+            {
+                return new Result<T>(Result, new AppException("Unknown parse exception.", exception));
+            }
+
+            return new Result<T>(Result, IsBreaked);
+        }
+    }
+
+    public sealed class AppArgs : IAppArgs
+    {
+        public Result<T> Parse<T>(params string[] args) where T : new()
+        {
+            var members = AppReflector.CollectMembers<T>();
+
+            var shortKeyMembers = members.GroupByKey(x => x.Attribute.ShortKey);
+            var longKeyMembers = members.GroupByKey(x => x.Attribute.LongKey);
+            var parameterMembers = members.Filter(MemberType.Parameter);
+
+            var nonEmptyArgs = args.Where(x => !string.IsNullOrEmpty(x)).Reverse().ToArray();
+
+            var parser = new Parser<T>(nonEmptyArgs, members, shortKeyMembers, longKeyMembers, parameterMembers);
+
+            return parser.Parse();
         }
     }
 }

@@ -2,14 +2,31 @@
 {
     public sealed class HelpAttribute : FlagAttribute
     {
-        public HelpAttribute(int order = 0, char shortKey = 'h', string longKey = "help", string description = "Display help.")
-            : base(order, shortKey, longKey, description) { }
+        public HelpAttribute(char shortKey = 'h', string longKey = "help", string description = "Display help.")
+            : base(shortKey, longKey, description, true) { }
     }
 
     public sealed class VersionAttribute : FlagAttribute
     {
-        public VersionAttribute(int order = 0, char shortKey = 'v', string longKey = "version", string description = "Display version information.")
-            : base(order, shortKey, longKey, description) { }
+        public VersionAttribute(char shortKey = 'v', string longKey = "version", string description = "Display version information.")
+            : base(shortKey, longKey, description, true) { }
+    }
+
+    public sealed class AllAttribute : FlagAttribute
+    {
+        public AllAttribute(char shortKey = default, string longKey = "all", string description = "Display all options.")
+            : base(shortKey, longKey, description, true) { }
+    }
+    public sealed class VerboseAttribute : FlagAttribute
+    {
+        public VerboseAttribute(char shortKey = default, string longKey = "verbose", string description = "Turn on verbose logging.")
+            : base(shortKey, longKey, description) { }
+    }
+
+    public sealed class QuietAttribute : FlagAttribute
+    {
+        public QuietAttribute(char shortKey = default, string longKey = "quiet", string description = "Turn off logging.")
+            : base(shortKey, longKey, description) { }
     }
 
     public enum LogLevel
@@ -23,20 +40,31 @@
 
     public class LogLevelAttribute : OptionAttribute
     {
-        public LogLevelAttribute(int order = 0, char shortKey = 'l', string longKey = "log-level", string description = "Logging level.", string valueName = "level", bool isRequired = true)
-            : base(order, shortKey, longKey, description, valueName, isRequired) { }
+        public LogLevelAttribute(char shortKey = 'l', string longKey = "log-level", string description = "Logging level.", string valueName = "level", bool isRequired = true)
+            : base(shortKey, longKey, description, valueName, isRequired) { }
     }
 
     public abstract class OptionsBase
     {
         [Help]
+        [Output("Help")]
         public bool Help = false;
 
         [Version]
+        [Output("Help")]
         public bool Version = false;
 
         [LogLevel]
+        [Output("Flags", true)]
         public LogLevel LogLevel = LogLevel.Normal;
+
+        [Verbose]
+        [Output("Flags")]
+        public bool Verbose = false;
+
+        [Quiet]
+        [Output("Flags")]
+        public bool Queit = false;
     }
 
     public interface IAppRunner
@@ -110,6 +138,7 @@
             {
                 var result = Args.Parse<TOptions>(args);
 
+
                 Console.Setup(getValue<LogLevelAttribute, LogLevel>(result.Options, LogLevel.Normal));
 
                 if (result.IsBreaked)
@@ -119,6 +148,8 @@
                         Output.Version();
                         return 0;
                     }
+
+                    // var isAll = getValue<AllAttribute, bool>(result.Options, false);
 
                     if (getValue<HelpAttribute, bool>(result.Options, false))
                     {
@@ -132,9 +163,9 @@
                     return 0;
                 }
 
-                if (result.HasErrors)
+                if (result.Exception != null)
                 {
-                    Console.Error(result.Errors.Pop());
+                    Console.Exception(result.Exception);
                     Output.Usage(result.Options);
                     return -2;
                 }

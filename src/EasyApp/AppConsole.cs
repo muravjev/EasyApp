@@ -98,7 +98,11 @@
                 }
 
                 WriteLine(LogLevel.Error, ex.Message, ConsoleColor.Red);
-                WriteLine(LogLevel.Error, ex.StackTrace);
+
+                if (!string.IsNullOrEmpty(ex.StackTrace))
+                {
+                    WriteLine(LogLevel.Verbose, ex.StackTrace);
+                }
             }
         }
     }
