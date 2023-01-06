@@ -20,8 +20,6 @@
                 return 0;
             }
 
-            // var isAll = GetValue<AllAttribute>(result.Options);
-
             if (Members.GetValue<HelpAttribute>(result.Options))
             {
                 console.Usage(result.Options);

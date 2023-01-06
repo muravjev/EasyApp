@@ -14,21 +14,21 @@
         [HelpSection]
         public bool All = false;
 
-        [LogLevel]
+        [Verbosity]
         [FlagsSection]
         [IsHidden]
-        public LogLevel LogLevel = LogLevel.Normal;
+        public Verbosity Verbosity = Verbosity.Normal;
 
         [Minimal]
         [FlagsSection]
-        public bool Minimal { set { LogLevel = LogLevel.Minimal; } }
+        public bool Minimal { set { Verbosity = Verbosity.Minimal; } }
 
-        [Verbose]
+        [Detailed]
         [FlagsSection]
-        public bool Verbose { set { LogLevel = LogLevel.Verbose; } }
+        public bool Detailed { set { Verbosity = Verbosity.Detailed; } }
 
         [Quiet]
         [FlagsSection]
-        public bool Queit { set { LogLevel = LogLevel.Quiet; } }
+        public bool Queit { set { Verbosity = Verbosity.Quiet; } }
     }
 }

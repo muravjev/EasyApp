@@ -6,8 +6,8 @@ namespace EasyApp.processor
     {
         public static IProcessor<TOptions> Build<TOptions>(EasyApp<TOptions> settings, Member[] members, TOptions options)
         {
-            var logLevel = members.GetValue<LogLevelAttribute, LogLevel>(options, LogLevel.Normal);
-            var console = new EasyAppConsole(logLevel, new AppInfoProvider(), settings.OutputEncoding);
+            var verbosity = members.GetValue<VerbosityAttribute, Verbosity>(options, Verbosity.Normal);
+            var console = new EasyAppConsole<TOptions>(settings, members, verbosity, new AppInfoProvider());
 
             return new Processor<TOptions>(settings, console, members);
         }
